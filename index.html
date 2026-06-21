@@ -1,0 +1,3165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Méno'Base</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7a8c6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Méno'Base">
+<style>
+:root {
+  /* PALETTE SAUGE (défaut) */
+  --primary: #7a8c6e;
+  --primary-dark: #5e6e54;
+  --primary-deeper: #44503d;
+  --primary-light: #f0f3ee;
+  --primary-mid: #c2cebc;
+  --accent: #ef8358;
+  --accent-light: #fef0ea;
+  --red: #E24B4A;
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface2: #f2f0eb;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #252820;
+  --text2: #5e6058;
+  --text3: #9e9e90;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+/* PALETTES */
+body.palette-rose { --primary:#b07ca0;--primary-dark:#8f5c80;--primary-deeper:#6b3f60;--primary-light:#f8f0f5;--primary-mid:#ddbfd5; }
+body.palette-terracotta { --primary:#c9603a;--primary-dark:#a84b28;--primary-deeper:#7c341a;--primary-light:#fdf0eb;--primary-mid:#e9b09a; }
+body.palette-vertdeau { --primary:#4a9e9e;--primary-dark:#357a7a;--primary-deeper:#225858;--primary-light:#eef8f8;--primary-mid:#9fd5d5; }
+body.palette-mauve { --primary:#8b6faa;--primary-dark:#6e548e;--primary-deeper:#503b6a;--primary-light:#f3eff8;--primary-mid:#c9b8e0; }
+body.palette-marine { --primary:#2e5c8a;--primary-dark:#1f436a;--primary-deeper:#122c48;--primary-light:#eaf0f8;--primary-mid:#92b4d5; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+/* LAYOUT */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 270px; min-width: 270px; background: var(--surface); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; transition: width 0.2s ease, min-width 0.2s ease; overflow: hidden; }
+.sidebar.collapsed { width: 44px; min-width: 44px; }
+.sidebar.collapsed .sb-header, .sidebar.collapsed .sb-search, .sidebar.collapsed .sb-actions, .sidebar.collapsed .sb-special-btns, .sidebar.collapsed .sb-list, .sidebar.collapsed .sb-footer-txt { display: none; }
+.sidebar.collapsed .sb-footer { justify-content: center; padding: 12px 6px; flex-direction: column; gap: 8px; }
+.expand-btn { display: none; background: none; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 9px; cursor: pointer; font-size: 13px; color: var(--text3); transition: all 0.15s; }
+.expand-btn:hover { background: var(--surface2); color: var(--text); }
+.sidebar.collapsed .expand-btn { display: block; }
+.sidebar.collapsed #btn-collapse { display: none; }
+.main { flex: 1; overflow-y: auto; }
+
+/* SIDEBAR */
+.sb-header { padding: 18px 16px 12px; border-bottom: 0.5px solid var(--border); }
+.sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.sb-icon { width: 34px; height: 34px; background: var(--primary); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 15px; color: white; font-weight: 700; letter-spacing: -1px; flex-shrink: 0; }
+.sb-brand { display: flex; flex-direction: column; min-width: 0; }
+.sb-title { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-sub { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-new { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s; }
+.btn-new:hover { background: var(--primary-dark); }
+.sb-search { padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+.sb-search input { width: 100%; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); font-size: 13px; color: var(--text); outline: none; }
+.sb-search input:focus { border-color: var(--primary); }
+.sb-list { flex: 1; overflow-y: auto; padding: 6px 8px; }
+.sb-empty { padding: 24px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+.client-item { padding: 10px 10px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 2px; transition: background 0.1s; border: 0.5px solid transparent; }
+.client-item:hover { background: var(--surface2); }
+.client-item.active { background: var(--primary-light); border-color: var(--primary-mid); }
+.ci-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.ci-info { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.ci-date { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+/* SIDEBAR ACTIONS */
+.sb-actions { padding: 8px 10px; border-bottom: 0.5px solid var(--border); display: flex; gap: 6px; }
+.sb-footer { padding: 12px 16px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.sb-footer-txt { font-size: 10px; color: var(--text3); line-height: 1.6; }
+.btn-settings { background: none; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 9px; cursor: pointer; font-size: 13px; color: var(--text3); transition: all 0.15s; }
+.btn-settings:hover { background: var(--surface2); color: var(--text); }
+
+/* WELCOME */
+.welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; padding: 40px; text-align: center; }
+.welcome h2 { font-size: 22px; font-weight: 600; color: var(--text); }
+.welcome p { font-size: 15px; color: var(--text2); max-width: 340px; line-height: 1.6; }
+
+/* FORM AREA */
+.form-area { padding: 0; }
+.form-header { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 13px 24px; display: flex; align-items: center; justify-content: space-between; }
+.fh-left { display: flex; flex-direction: column; gap: 2px; }
+.fh-name { font-size: 17px; font-weight: 600; color: var(--text); }
+.fh-meta { font-size: 13px; color: var(--text3); }
+.fh-actions { display: flex; gap: 8px; align-items: center; }
+.save-badge { font-size: 12px; color: var(--primary); font-weight: 500; }
+.btn-sm { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-family: inherit; }
+.btn-sm:hover { background: var(--surface2); }
+.btn-sm.danger { color: #E24B4A; border-color: #E24B4A; }
+.btn-sm.danger:hover { background: #fff0f0; }
+.btn-primary { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
+.btn-primary:hover { background: var(--primary-dark) !important; }
+
+/* CLIENT BAR */
+.client-bar { background: var(--surface2); border-bottom: 0.5px solid var(--border); padding: 13px 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+/* NAV TABS */
+.nav-tabs { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0 16px; display: flex; flex-wrap: wrap; }
+.tab { padding: 9px 8px; font-size: 12px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 3px; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+/* NAV ARROWS */
+.nav-arrows { display: flex; align-items: center; justify-content: space-between; padding: 7px 16px; background: var(--surface2); border-bottom: 0.5px solid var(--border); }
+.nav-arrow-btn { display: flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+.nav-arrow-btn:hover:not(:disabled) { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary-dark); }
+.nav-arrow-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-tab-indicator { font-size: 13px; color: var(--text3); font-weight: 500; }
+
+/* NAV ARROWS BOTTOM */
+.nav-arrows-bottom { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px 24px; margin-top: 8px; }
+
+/* SECTIONS */
+.sections { padding: 20px 24px 10px; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 18px 20px; margin-bottom: 14px; }
+.card-title { font-size: 12px; font-weight: 600; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 7px; }
+
+/* FORM ELEMENTS */
+.fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; }
+.fl { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+.fi { width: 100%; padding: 9px 11px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--surface); font-size: 14px; color: var(--text); font-family: inherit; transition: border-color 0.15s; }
+.fi:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(122,140,110,0.12); }
+.fta { min-height: 65px; resize: vertical; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+/* CHIPS & YN */
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.chip { padding: 5px 11px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--border2); color: var(--text2); background: transparent; transition: all 0.15s; }
+.chip:hover { background: var(--surface2); }
+.chip.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); font-weight: 500; }
+.yn { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+.yn button { padding: 6px 13px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: transparent; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; font-family: inherit; }
+.yn button:hover { background: var(--surface2); }
+.yn button.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); font-weight: 500; }
+
+/* SCORES */
+.score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sr { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.sl { font-size: 14px; color: var(--text); flex: 1; }
+.sv { width: 48px; height: 34px; text-align: center; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; color: var(--text); background: var(--surface); font-family: inherit; }
+.sv:focus { outline: none; border-color: var(--primary); }
+.sn { flex: 1; }
+
+/* NEUROTRANSMETTEURS */
+.neuro-blk { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px 15px; margin-bottom: 9px; }
+.neuro-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.neuro-name { font-size: 13px; font-weight: 600; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.04em; }
+.neuro-score { font-size: 12px; color: var(--text2); background: var(--surface2); padding: 2px 9px; border-radius: 20px; font-weight: 500; }
+.neuro-score.alert { background: var(--accent-light); color: var(--accent); }
+.neuro-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.ni { display: flex; align-items: center; gap: 7px; font-size: 13px; padding: 2px 0; }
+.ni input[type=checkbox] { accent-color: var(--primary); width: 14px; height: 14px; cursor: pointer; flex-shrink: 0; }
+.ni label { color: var(--text); cursor: pointer; }
+.neuro-reco { font-size: 12px; color: var(--text3); margin-top: 9px; padding-top: 9px; border-top: 0.5px solid var(--border); font-style: italic; }
+
+/* POIDS */
+.poids-results { background: var(--primary-light); border-radius: var(--radius-sm); padding: 13px 17px; margin-top: 10px; }
+.poids-vals { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px; }
+.pv { display: flex; flex-direction: column; gap: 2px; }
+.pv span:first-child { font-size: 11px; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.pv span:last-child { font-size: 23px; font-weight: 600; color: var(--primary-deeper); }
+.pv span.warn { color: var(--red); }
+
+/* SPORT GRID */
+.sport-grid { display: grid; grid-template-columns: 130px repeat(7, 1fr); gap: 4px; align-items: center; }
+.sport-grid .day-label { text-align: center; font-size: 12px; font-weight: 500; color: var(--text3); padding: 4px 0; }
+.sport-grid .row-label { font-size: 12px; color: var(--text2); }
+.sport-grid .fi { padding: 5px 4px; font-size: 12px; text-align: center; }
+
+/* SUIVI */
+.suivi-wrap { overflow-x: auto; }
+.suivi-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.suivi-table th { font-size: 12px; font-weight: 500; color: var(--text3); text-align: left; padding: 9px 10px; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.suivi-table td { padding: 4px 4px; vertical-align: top; border-bottom: 0.5px solid var(--border); }
+.suivi-table td input, .suivi-table td textarea { width: 100%; border: none; background: transparent; font-size: 13px; color: var(--text); font-family: inherit; resize: vertical; min-height: 90px; padding: 4px 6px; border-radius: 4px; }
+.suivi-table td input:focus, .suivi-table td textarea:focus { outline: none; background: var(--surface2); }
+.btn-add-row { font-size: 13px; color: var(--primary); cursor: pointer; padding: 9px 0 2px; display: flex; align-items: center; gap: 5px; background: none; border: none; font-family: inherit; }
+.btn-add-row:hover { color: var(--primary-dark); }
+
+/* AUTRE SECTION */
+.autre-section { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+.autre-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+
+/* ACCOMPAGNEMENT */
+.paie-wrap { overflow-x: auto; }
+.paie-table { width: 100%; border-collapse: collapse; min-width: 520px; }
+.paie-table th { font-size: 12px; font-weight: 500; color: var(--text3); text-align: left; padding: 8px 8px; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.paie-table td { padding: 3px 3px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+.paie-table td input, .paie-table td select { width: 100%; border: none; background: transparent; font-size: 13px; color: var(--text); font-family: inherit; padding: 5px 6px; border-radius: 4px; }
+.paie-table td input:focus, .paie-table td select:focus { outline: none; background: var(--surface2); }
+.paie-table td select { cursor: pointer; }
+.offre-chip { padding: 5px 13px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--border2); color: var(--text2); background: transparent; transition: all 0.15s; display: inline-block; }
+.offre-chip:hover { background: var(--surface2); }
+.offre-chip.on { background: var(--accent-light); border-color: var(--accent); color: #7a3a10; font-weight: 500; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal-overlay.hidden { display: none; }
+.modal { background: var(--surface); border-radius: var(--radius); padding: 26px; max-width: 380px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.modal p { font-size: 14px; color: var(--text2); line-height: 1.5; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* SETTINGS MODAL */
+.settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; }
+.settings-overlay.hidden { display: none; }
+.settings-panel { background: var(--surface); border-radius: var(--radius); padding: 28px; max-width: 440px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+.settings-panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.settings-section { margin-bottom: 20px; }
+.settings-label { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.palette-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.palette-btn { width: 42px; height: 42px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: all 0.2s; position: relative; }
+.palette-btn:hover { transform: scale(1.1); }
+.palette-btn.active { border-color: var(--text); }
+.palette-btn::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: 700; opacity: 0; }
+.palette-btn.active::after { opacity: 1; }
+
+/* ═══════════════════════════════
+   DOCUMENTS
+═══════════════════════════════ */
+.doc-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border:0.5px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; background:var(--surface); flex-wrap:wrap; }
+.doc-icon { font-size:16px; flex-shrink:0; }
+.doc-name-input { flex:1; min-width:140px; border:none; background:transparent; font-size:14px; color:var(--text); font-family:inherit; padding:2px 4px; border-radius:4px; }
+.doc-name-input:focus { outline:none; background:var(--surface2); }
+.doc-path-input { flex:2; min-width:160px; border:none; background:transparent; font-size:12px; color:var(--text3); font-family:inherit; padding:2px 4px; }
+.doc-path-input:focus { outline:none; background:var(--surface2); border-radius:4px; }
+.btn-open-doc { padding:4px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--primary); background:transparent; color:var(--primary-dark); font-size:12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-open-doc:hover { background:var(--primary-light); }
+.btn-del-doc { padding:4px 8px; border:none; background:transparent; color:var(--text3); font-size:14px; cursor:pointer; border-radius:4px; }
+.btn-del-doc:hover { color:var(--red); }
+
+/* ═══════════════════════════════
+   ÉVOLUTION
+═══════════════════════════════ */
+.evo-block { border:0.5px solid var(--border); border-radius:var(--radius-sm); margin-bottom:14px; overflow:hidden; }
+.evo-block-title { font-size:12px; font-weight:600; color:var(--primary-dark); text-transform:uppercase; letter-spacing:0.04em; padding:10px 14px; background:var(--primary-light); border-bottom:0.5px solid var(--border); }
+.evo-entries { padding:8px 12px; }
+.evo-entry { display:grid; grid-template-columns:130px 1fr auto; gap:8px; align-items:center; padding:5px 0; border-bottom:0.5px solid var(--border); }
+.evo-entry:last-child { border-bottom:none; }
+.evo-entry input[type=date] { padding:5px 8px; border:0.5px solid var(--border2); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; color:var(--text); background:var(--surface); }
+.evo-entry input[type=date]:focus { outline:none; border-color:var(--primary); }
+.evo-val-input { width:100%; padding:5px 8px; border:0.5px solid var(--border2); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; color:var(--text); background:var(--surface); }
+.evo-val-input:focus { outline:none; border-color:var(--primary); }
+.evo-initial-badge { font-size:11px; padding:2px 7px; background:var(--primary-mid); color:var(--primary-deeper); border-radius:10px; white-space:nowrap; }
+
+/* CHIP MULTI-SELECT */
+.chip-multi { user-select: none; }
+.chip-multi.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); font-weight: 500; }
+
+/* INDICATEURS ROUGE/ORANGE */
+.fl-wrap { display: flex; align-items: center; justify-content: space-between; }
+.flag-btn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 2px; opacity: 0.3; transition: opacity 0.15s; line-height: 1; }
+.flag-btn:hover { opacity: 0.7; }
+.flag-btn.orange { opacity: 1; color: #e08000; }
+.flag-btn.red { opacity: 1; color: #E24B4A; }
+.fl.flagged-orange { color: #e08000; font-weight: 600; }
+.fl.flagged-red { color: #E24B4A; font-weight: 600; }
+
+/* SYNTHÈSE */
+.synth-section { margin-bottom: 18px; }
+.synth-section-title { font-size: 13px; font-weight: 600; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.synth-row { display: flex; gap: 8px; margin-bottom: 5px; font-size: 14px; }
+.synth-label { color: var(--text3); min-width: 180px; font-size: 13px; }
+.synth-val { color: var(--text); font-weight: 500; }
+.synth-empty { color: var(--text3); font-style: italic; font-size: 13px; }
+.synth-print-btn { display: flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text2); font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; margin-bottom: 20px; }
+.synth-print-btn:hover { background: var(--primary-light); color: var(--primary-dark); }
+
+/* POST-IT TODO */
+.postit { background: #fffbe6; border-bottom: 0.5px solid #e8d84a; padding: 8px 24px 10px; }
+.postit-title { font-size: 11px; font-weight: 700; color: #a07800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.postit-items { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.postit-item { display: flex; align-items: center; gap: 5px; background: #fff9c4; border: 0.5px solid #e0c84a; border-radius: 6px; padding: 4px 8px 4px 5px; }
+.postit-item.done .postit-text { text-decoration: line-through; color: #aaa; }
+.postit-check { width: 15px; height: 15px; accent-color: #5a9e5a; cursor: pointer; flex-shrink: 0; }
+.postit-text { border: none; background: transparent; font-size: 13px; color: #5a4a00; font-family: inherit; min-width: 80px; max-width: 240px; outline: none; }
+.postit-text:focus { background: rgba(255,255,255,0.7); border-radius: 3px; }
+.postit-del { background: none; border: none; cursor: pointer; color: #c0a020; font-size: 13px; padding: 0 2px; opacity: 0.4; line-height: 1; }
+.postit-del:hover { opacity: 1; color: #E24B4A; }
+.btn-postit-add { background: none; border: 0.5px dashed #c0a020; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #a07800; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-postit-add:hover { background: #fff9c4; }
+
+@media print {
+  .sidebar, .form-header, .client-bar, .nav-tabs, .nav-arrows, .nav-arrows-bottom, .synth-print-btn { display: none !important; }
+  .main { overflow: visible; }
+  .shell { height: auto; }
+  #s-synthese { display: block !important; }
+}
+
+/* ═══════════════════════════════
+   SIDEBAR — boutons spéciaux
+═══════════════════════════════ */
+.sb-special-btns { padding: 6px 10px; border-bottom: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.btn-special { width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: transparent; color: var(--text2); font-size: 13px; font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all 0.15s; }
+.btn-special:hover { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary-mid); }
+.btn-special.active-view { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary); font-weight: 500; }
+
+/* ═══════════════════════════════
+   RESSOURCES
+═══════════════════════════════ */
+.ressources-page { padding: 24px; }
+.ressources-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.ressources-title { font-size: 20px; font-weight: 600; color: var(--text); }
+.theme-block { margin-bottom: 18px; }
+.theme-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--primary-light); border: 0.5px solid var(--primary-mid); border-radius: var(--radius-sm); cursor: pointer; user-select: none; }
+.theme-name { font-size: 13px; font-weight: 600; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 8px; }
+.theme-count { font-size: 12px; color: var(--text3); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.theme-toggle { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
+.theme-toggle.open { transform: rotate(180deg); }
+.theme-body { border: 0.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: var(--surface); overflow: hidden; }
+.ressource-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 0.5px solid var(--border); transition: background 0.1s; }
+.ressource-item:last-child { border-bottom: none; }
+.ressource-item:hover { background: var(--surface2); }
+.ri-icon { font-size: 16px; flex-shrink: 0; }
+.ri-name { flex: 1; font-size: 14px; color: var(--text); font-weight: 500; }
+.ri-type { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 10px; }
+.btn-open-res { padding: 5px 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--primary); background: transparent; color: var(--primary-dark); font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn-open-res:hover { background: var(--primary-light); }
+.btn-del-res { padding: 4px 8px; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--text3); font-size: 14px; cursor: pointer; transition: all 0.15s; }
+.btn-del-res:hover { color: var(--red); }
+.add-ressource-form { padding: 12px 14px; background: var(--surface2); border-top: 0.5px solid var(--border); display: none; }
+.add-ressource-form.open { display: block; }
+.arf-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.arf-row .fg { margin: 0; flex: 1; min-width: 160px; }
+.btn-add-res { padding: 8px 14px; border-radius: var(--radius-sm); border: none; background: var(--primary); color: white; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s; }
+.btn-add-res:hover { background: var(--primary-dark); }
+.btn-show-add { display: flex; align-items: center; gap: 6px; width: 100%; padding: 9px 14px; border: none; background: transparent; color: var(--primary); font-size: 13px; cursor: pointer; font-family: inherit; border-top: 0.5px solid var(--border); transition: all 0.15s; }
+.btn-show-add:hover { background: var(--primary-light); }
+
+/* ═══════════════════════════════
+   PAIEMENTS — onglet cliente
+═══════════════════════════════ */
+.paie-v5-wrap { overflow-x: auto; }
+.paie-v5-table { width: 100%; border-collapse: collapse; min-width: 580px; }
+.paie-v5-table th { font-size: 12px; font-weight: 500; color: var(--text3); text-align: left; padding: 8px 10px; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.paie-v5-table td { padding: 4px 4px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+.paie-v5-table td input { width: 100%; border: none; background: transparent; font-size: 13px; color: var(--text); font-family: inherit; padding: 6px 8px; border-radius: 4px; }
+.paie-v5-table td input:focus { outline: none; background: var(--surface2); }
+.moyen-btns { display: flex; gap: 3px; flex-wrap: wrap; }
+.moyen-btn { padding: 4px 8px; border-radius: 12px; font-size: 11px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
+.moyen-btn:hover { background: var(--surface2); }
+.moyen-btn.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); font-weight: 500; }
+.paie-total-row { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 10px 4px 2px; border-top: 1.5px solid var(--border2); margin-top: 2px; }
+.paie-total-label { font-size: 13px; color: var(--text3); }
+.paie-total-val { font-size: 18px; font-weight: 700; color: var(--primary-dark); }
+.btn-del-row { padding: 3px 7px; border: none; background: transparent; color: var(--text3); font-size: 15px; cursor: pointer; border-radius: 4px; }
+.btn-del-row:hover { color: var(--red); background: #fff0f0; }
+
+/* ═══════════════════════════════
+   VUE GLOBALE PAIEMENTS
+═══════════════════════════════ */
+.global-paie-page { padding: 24px; }
+.gp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.gp-title { font-size: 20px; font-weight: 600; color: var(--text); }
+.gp-filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gp-filter-btn { padding: 6px 13px; border-radius: 20px; font-size: 13px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.gp-filter-btn:hover { background: var(--surface2); }
+.gp-filter-btn.on { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); font-weight: 500; }
+.gp-custom-dates { display: flex; gap: 6px; align-items: center; }
+.gp-custom-dates input { padding: 6px 9px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); font-family: inherit; background: var(--surface); }
+.gp-custom-dates input:focus { outline: none; border-color: var(--primary); }
+.gp-stats { display: flex; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.gp-stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 20px; min-width: 140px; }
+.gp-stat-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.gp-stat-val { font-size: 24px; font-weight: 700; color: var(--primary-dark); }
+.gp-stat-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.gp-table-wrap { overflow-x: auto; }
+.gp-table { width: 100%; border-collapse: collapse; }
+.gp-table th { font-size: 12px; font-weight: 500; color: var(--text3); text-align: left; padding: 9px 12px; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.gp-table td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); font-size: 14px; }
+.gp-table tr:last-child td { border-bottom: none; }
+.gp-table tr:hover td { background: var(--surface2); }
+.gp-badge { padding: 3px 9px; border-radius: 12px; font-size: 12px; background: var(--primary-light); color: var(--primary-dark); font-weight: 500; display: inline-block; }
+.gp-amount { font-weight: 600; color: var(--text); }
+.btn-export-csv { padding: 8px 16px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); background: var(--surface); color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+.btn-export-csv:hover { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary-mid); }
+
+/* ÉCRANS PIN & ACTIVATION */
+.lock-screen { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999; }
+.lock-box { background:var(--surface);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 8px 40px rgba(0,0,0,0.10);text-align:center; }
+.lock-logo { font-size:36px;margin-bottom:10px; }
+.lock-title { font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px; }
+.lock-sub { font-size:14px;color:var(--text3);margin-bottom:32px;line-height:1.5; }
+.pin-dots { display:flex;justify-content:center;gap:14px;margin-bottom:28px; }
+.pin-dot { width:16px;height:16px;border-radius:50%;border:2px solid var(--primary-mid);background:transparent;transition:all 0.15s; }
+.pin-dot.filled { background:var(--primary);border-color:var(--primary); }
+.pin-pad { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:260px;margin:0 auto 20px; }
+.pin-key { padding:16px;border-radius:12px;border:0.5px solid var(--border2);background:var(--surface2);font-size:20px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.12s;user-select:none; }
+.pin-key:hover { background:var(--primary-light);border-color:var(--primary-mid); }
+.pin-key:active { transform:scale(0.93); }
+.pin-error { color:var(--red);font-size:13px;min-height:20px;margin-bottom:8px; }
+.lock-link { font-size:13px;color:var(--primary);cursor:pointer;text-decoration:underline;margin-top:12px;display:inline-block; }
+.lock-input { width:100%;padding:12px 14px;border:1.5px solid var(--border2);border-radius:10px;font-size:15px;color:var(--text);font-family:inherit;margin-bottom:12px;text-align:center; }
+.lock-input:focus { outline:none;border-color:var(--primary); }
+.lock-btn { width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;margin-bottom:10px; }
+.lock-btn:hover { background:var(--primary-dark); }
+.lock-btn.sec { background:transparent;color:var(--text3);border:0.5px solid var(--border2); }
+.lock-btn.sec:hover { background:var(--surface2);color:var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ECRAN ACTIVATION -->
+<div class="lock-screen" id="screen-activation" style="display:none">
+  <div class="lock-box">
+    <div class="lock-logo">✦</div>
+    <div class="lock-title">Bienvenue sur Menobase</div>
+    <div class="lock-sub">Entrez votre nom de famille et votre cle d activation pour commencer.</div>
+    <input class="lock-input" id="act-name" placeholder="Votre nom de famille">
+    <input class="lock-input" id="act-key" placeholder="Cle d activation (16 caracteres)" maxlength="16" style="letter-spacing:3px;text-transform:uppercase">
+    <div class="pin-error" id="act-error"></div>
+    <button class="lock-btn" onclick="verifyActivation()">Activer Menobase</button>
+  </div>
+</div>
+
+<!-- ECRAN CREATION PIN -->
+<div class="lock-screen" id="screen-create-pin" style="display:none">
+  <div class="lock-box">
+    <div class="lock-logo">🔒</div>
+    <div class="lock-title">Creer votre code PIN</div>
+    <div class="lock-sub" id="create-pin-sub">Choisissez un code a 6 chiffres pour proteger vos donnees.</div>
+    <div class="pin-dots" id="create-pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="pin-error" id="create-pin-error"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinCreate(1)">1</button>
+      <button class="pin-key" onclick="pinCreate(2)">2</button>
+      <button class="pin-key" onclick="pinCreate(3)">3</button>
+      <button class="pin-key" onclick="pinCreate(4)">4</button>
+      <button class="pin-key" onclick="pinCreate(5)">5</button>
+      <button class="pin-key" onclick="pinCreate(6)">6</button>
+      <button class="pin-key" onclick="pinCreate(7)">7</button>
+      <button class="pin-key" onclick="pinCreate(8)">8</button>
+      <button class="pin-key" onclick="pinCreate(9)">9</button>
+      <div></div>
+      <button class="pin-key" onclick="pinCreate(0)">0</button>
+      <button class="pin-key" onclick="pinCreateDel()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ECRAN PIN -->
+<div class="lock-screen" id="screen-pin" style="display:none">
+  <div class="lock-box">
+    <div class="lock-logo">✦</div>
+    <div class="lock-title">Menobase</div>
+    <div class="lock-sub">Entrez votre code PIN</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinUnlock(1)">1</button>
+      <button class="pin-key" onclick="pinUnlock(2)">2</button>
+      <button class="pin-key" onclick="pinUnlock(3)">3</button>
+      <button class="pin-key" onclick="pinUnlock(4)">4</button>
+      <button class="pin-key" onclick="pinUnlock(5)">5</button>
+      <button class="pin-key" onclick="pinUnlock(6)">6</button>
+      <button class="pin-key" onclick="pinUnlock(7)">7</button>
+      <button class="pin-key" onclick="pinUnlock(8)">8</button>
+      <button class="pin-key" onclick="pinUnlock(9)">9</button>
+      <div></div>
+      <button class="pin-key" onclick="pinUnlock(0)">0</button>
+      <button class="pin-key" onclick="pinUnlockDel()">⌫</button>
+    </div>
+    <span class="lock-link" onclick="showForgot()">Code oublie ?</span>
+  </div>
+</div>
+
+<!-- ECRAN PIN OUBLIE -->
+<div class="lock-screen" id="screen-forgot" style="display:none">
+  <div class="lock-box">
+    <div class="lock-logo">🔑</div>
+    <div class="lock-title">Code oublie</div>
+    <div class="lock-sub">Entrez votre nom de famille et cle d activation pour reinitialiser votre PIN.</div>
+    <input class="lock-input" id="forgot-name" placeholder="Votre nom de famille">
+    <input class="lock-input" id="forgot-key" placeholder="Cle d activation" maxlength="16" style="letter-spacing:3px;text-transform:uppercase">
+    <div class="pin-error" id="forgot-error"></div>
+    <button class="lock-btn" onclick="verifyForgot()">Reinitialiser mon PIN</button>
+    <button class="lock-btn sec" onclick="showPinScreen()">Retour</button>
+  </div>
+</div>
+
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">
+        <div class="sb-icon">✦</div>
+        <div class="sb-brand">
+          <div class="sb-title" id="sb-title">Méno'Base</div>
+          <div class="sb-sub" id="sb-sub">Outil de suivi ménopause</div>
+        </div>
+      </div>
+      <button class="btn-new" onclick="newClient()">＋ Nouveau dossier</button>
+    </div>
+    <div class="sb-search">
+      <input type="text" placeholder="Rechercher une cliente…" id="search-input" oninput="filterClients()">
+    </div>
+    <div class="sb-special-btns">
+      <button class="btn-special" id="btn-ressources" onclick="showRessources()">📚 Ressources</button>
+      <button class="btn-special" id="btn-global-paie" onclick="showGlobalPaiements()">💰 Paiements</button>
+    </div>
+    <div class="sb-actions">
+      <button class="btn-sm" style="flex:1;justify-content:center;font-size:12px" onclick="exportBase()" title="Sauvegarder toutes les clientes">⬇ Exporter la base</button>
+      <label class="btn-sm" style="flex:1;justify-content:center;font-size:12px;cursor:pointer" title="Restaurer depuis un fichier exporté">⬆ Importer<input type="file" accept=".json" style="display:none" onchange="importBase(event)"></label>
+    </div>
+    <div class="sb-list" id="client-list">
+      <div class="sb-empty">Aucun dossier encore.<br>Cliquez sur "Nouveau dossier".</div>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-footer-txt">Méno'Base © Joanna Blejan<br>Tous droits réservés</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn-settings" onclick="toggleSidebar()" title="Réduire/Agrandir" id="btn-collapse">◀</button>
+        <button class="btn-settings" onclick="openSettings()" title="Paramètres">⚙</button>
+      </div>
+      <button class="expand-btn" onclick="toggleSidebar()" title="Afficher la liste">▶</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+    <div class="welcome" id="welcome">
+      <div style="font-size:38px;margin-bottom:4px">✦</div>
+      <h2 id="welcome-title">Méno'Base</h2>
+      <p style="font-size:13px;color:var(--text3);margin-top:-6px;margin-bottom:8px" id="welcome-sub">Outil de suivi ménopause</p>
+      <p>Sélectionnez une cliente dans la liste ou créez un nouveau dossier pour commencer.</p>
+      <button class="btn-new" style="width:auto;padding:11px 26px;margin-top:8px" onclick="newClient()">＋ Créer un nouveau dossier</button>
+    </div>
+
+    <div id="form-area" style="display:none">
+      <!-- Header -->
+      <div class="form-header">
+        <div class="fh-left">
+          <div class="fh-name" id="fh-name">Nouvelle cliente</div>
+          <div class="fh-meta" id="fh-meta">Bilan en cours</div>
+        </div>
+        <div class="fh-actions">
+          <span class="save-badge" id="save-badge"></span>
+          <button class="btn-sm" onclick="exportClient()">⬇ Exporter</button>
+          <button class="btn-sm danger" onclick="confirmDelete()">Supprimer</button>
+          <button class="btn-sm btn-primary" onclick="saveClient()">💾 Sauvegarder</button>
+        </div>
+      </div>
+
+      <!-- Client Bar -->
+      <div class="client-bar">
+        <div class="fg" style="margin:0"><div class="fl">Prénom</div><input class="fi" id="prenom" placeholder="Prénom" oninput="updateHeader()"></div>
+        <div class="fg" style="margin:0"><div class="fl">Nom</div><input class="fi" id="nom" placeholder="Nom" oninput="updateHeader()"></div>
+        <div class="fg" style="margin:0"><div class="fl">Date de naissance</div><input class="fi" type="date" id="ddn" oninput="syncPoidsToCalc(); updateHeader()"></div>
+        <div class="fg" style="margin:0"><div class="fl">Date du bilan</div><input class="fi" type="date" id="date_bilan"></div>
+      </div>
+
+      <!-- POST-IT TODO -->
+      <div class="postit" id="postit-zone">
+        <div class="postit-title">📌 À dire / À faire</div>
+        <div class="postit-items" id="postit-items">
+          <button class="btn-postit-add" onclick="addPostitItem()">＋ Ajouter une note</button>
+        </div>
+      </div>
+
+      <!-- Nav tabs -->
+      <div class="nav-tabs" id="nav-tabs">
+        <button class="tab active" onclick="showTab('infos',this)">👤 Infos</button>
+        <button class="tab" onclick="showTab('motif',this)">🎯 Motifs</button>
+        <button class="tab" onclick="showTab('medical',this)">🩺 Médical</button>
+        <button class="tab" onclick="showTab('alim',this)">🥗 Alimentation</button>
+        <button class="tab" onclick="showTab('sport',this)">🏃 Sport</button>
+        <button class="tab" onclick="showTab('mental',this)">🧠 Mental</button>
+        <button class="tab" onclick="showTab('corps',this)">🫁 Corps</button>
+        <button class="tab" onclick="showTab('meno',this)">〰 Ménopause</button>
+        <button class="tab" onclick="showTab('neuro',this)">⚡ Neuro</button>
+        <button class="tab" onclick="showTab('poids',this)">⚖ Poids</button>
+        <button class="tab" onclick="showTab('suivi',this)">📅 Suivi</button>
+        <button class="tab" onclick="showTab('paiements',this)">💳 Paiements</button>
+        <button class="tab" onclick="showTab('documents',this)">📎 Documents</button>
+        <button class="tab" onclick="showTab('evolution',this)">📈 Évolution</button>
+        <button class="tab" onclick="showTab('synthese',this)">📋 Synthèse</button>
+      </div>
+
+      <!-- Flèches navigation HAUT -->
+      <div class="nav-arrows" id="nav-arrows">
+        <button class="nav-arrow-btn" id="btn-prev" onclick="navTab(-1)">← Précédent</button>
+        <span class="nav-tab-indicator" id="tab-indicator"></span>
+        <button class="nav-arrow-btn" id="btn-next" onclick="navTab(1)">Suivant →</button>
+      </div>
+
+      <div class="sections">
+
+        <!-- INFOS PERSONNELLES -->
+        <div class="section active" id="s-infos">
+          <div class="card">
+            <div class="card-title">👤 Informations personnelles</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Profession</div><input class="fi" id="profession"></div>
+              <div class="fg"><div class="fl">Présentiel / Distanciel</div><div class="chips" id="c-suivi"><div class="chip" onclick="chip(this,'c-suivi')">Présentiel</div><div class="chip" onclick="chip(this,'c-suivi')">Distanciel</div><div class="chip" onclick="chip(this,'c-suivi')">Mixte</div></div></div>
+              <div class="fg"><div class="fl">E-mail</div><input class="fi" id="email" type="email"></div>
+              <div class="fg"><div class="fl">Téléphone</div><input class="fi" id="tel"></div>
+              <div class="fg"><div class="fl">Adresse</div><input class="fi" id="adresse"></div>
+              <div class="fg"><div class="fl">Médecin traitant</div><input class="fi" id="medecin" placeholder="Nom, ville"></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Résumé RDV découverte</div><textarea class="fi fta" id="resume_rdv" placeholder="Notes issues du rendez-vous découverte…" style="min-height:100px"></textarea></div>
+            <div class="fg" style="margin-top:9px">
+              <div class="fl">Profil</div>
+              <div class="chips" id="c-profil" style="margin-top:4px">
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-profil')">Thyroïdien</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-profil')">Surrénalien</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-profil')">Inflammatoire</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-profil')">Métabolique</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MOTIFS -->
+        <div class="section" id="s-motif">
+          <div class="card">
+            <div class="card-title">🎯 Motif de consultation</div>
+            <div id="objectifs-container">
+              <div class="fg"><div class="fl">Objectif 1 (principal)</div><input class="fi" id="obj1" placeholder="Ex : perte de poids, retrouver de l'énergie…"></div>
+              <div class="fg"><div class="fl">Objectif 2</div><input class="fi" id="obj2"></div>
+              <div class="fg"><div class="fl">Objectif 3</div><input class="fi" id="obj3"></div>
+            </div>
+            <button class="btn-add-row" onclick="addObjectif()" style="margin-top:6px">＋ Ajouter un objectif</button>
+          </div>
+        </div>
+
+        <!-- MÉDICAL -->
+        <div class="section" id="s-medical">
+          <div class="card">
+            <div class="card-title">🩺 Statut médical</div>
+            <div class="fg">
+              <div class="fl">Péri / Post ménopause</div>
+              <div class="chips" id="c-meno-stat">
+                <div class="chip" onclick="chip(this,'c-meno-stat')">Péri-ménopause</div>
+                <div class="chip" onclick="chip(this,'c-meno-stat')">Ménopause</div>
+                <div class="chip" onclick="chip(this,'c-meno-stat')">Ménopause chirurgicale</div>
+              </div>
+            </div>
+            <div class="fg" id="fg-meno-chir" style="display:none">
+              <div class="fl">Âge lors de la ménopause chirurgicale</div>
+              <input class="fi" id="meno_chir_age" placeholder="Ex : 42 ans" style="max-width:220px">
+            </div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Maladies actuelles</div><input class="fi" id="mal_act"></div>
+              <div class="fg"><div class="fl">Maladies passées</div><input class="fi" id="mal_pass"></div>
+            </div>
+            <div class="fg"><div class="fl">Antécédents familiaux</div><input class="fi" id="antecedents" placeholder="Cancer, diabète, ostéoporose, thyroïde, obésité…"></div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Traitements en cours</div><input class="fi" id="traitements"></div>
+              <div class="fg"><div class="fl">Compléments alimentaires</div><input class="fi" id="complements"></div>
+            </div>
+            <div class="g3">
+              <div class="fg"><div class="fl">Taille (cm)</div><input class="fi" id="taille" type="number" placeholder="168" oninput="syncPoidsToCalc()"></div>
+              <div class="fg"><div class="fl">Poids (kg)</div><input class="fi" id="poids" type="number" placeholder="65" oninput="syncPoidsToCalc()"></div>
+              <div class="fg"><div class="fl">Tabac</div><div class="chips" id="c-tabac"><div class="chip" onclick="chip(this,'c-tabac')">Non</div><div class="chip" onclick="chip(this,'c-tabac')">Oui</div><div class="chip" onclick="chip(this,'c-tabac')">Arrêt récent</div></div></div>
+            </div>
+            <div class="fg"><div class="fl">Prise de poids — précisions</div><input class="fi" id="poids_det" placeholder="Récente? Progressive? Depuis la ménopause?"></div>
+            <div class="fg"><div class="fl">Notes libres — Statut médical</div><textarea class="fi fta" id="note_medical" placeholder="Observations, contexte médical particulier…"></textarea></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🩸 Bilan sanguin</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Pour chaque marqueur, vous pouvez ajouter plusieurs entrées pour suivre l'évolution dans le temps.</p>
+            <div id="bilan-container"></div>
+          </div>
+        </div>
+
+        <!-- ALIMENTATION -->
+        <div class="section" id="s-alim">
+          <div class="card">
+            <div class="card-title">🥗 Habitudes alimentaires</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Régime particulier</div><input class="fi" id="regime" placeholder="Végétarien, sans gluten…"></div>
+              <div class="fg"><div class="fl">Intolérances</div><input class="fi" id="intolerances"></div>
+              <div class="fg"><div class="fl">Allergies</div><input class="fi" id="allergies"></div>
+              <div class="fg"><div class="fl">Nb repas / jour</div><input class="fi" id="repas" placeholder="Ex : 3 + 1 collation"></div>
+              <div class="fg"><div class="fl">Vitesse repas</div><div class="chips" id="c-vitesse"><div class="chip" onclick="chip(this,'c-vitesse')">Très vite</div><div class="chip" onclick="chip(this,'c-vitesse')">Vite</div><div class="chip" onclick="chip(this,'c-vitesse')">Doucement</div></div></div>
+              <div class="fg"><div class="fl">Aime cuisiner</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button><button onclick="yn(this)">Un peu</button></div></div>
+              <div class="fg"><div class="fl">Alcool</div><div class="chips" id="c-alcool"><div class="chip" onclick="chip(this,'c-alcool')">Jamais</div><div class="chip" onclick="chip(this,'c-alcool')">Social</div><div class="chip" onclick="chip(this,'c-alcool')">Régulier</div><div class="chip" onclick="chip(this,'c-alcool')">Quotidien</div></div></div>
+              <div class="fg"><div class="fl">Hydratation (L/j)</div><input class="fi" id="hydrat" placeholder="Ex : 1.5L"></div>
+            </div>
+            <div class="g2" style="margin-top:9px">
+              <div class="sr"><span class="sl">Faim (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_faim" placeholder="—"></div>
+              <div class="sr"><span class="sl">Satiété (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_satiete" placeholder="—"></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Notes libres — Habitudes alimentaires</div><textarea class="fi fta" id="note_alim_hab" placeholder="Observations, contexte particulier…"></textarea></div>
+          </div>
+          <div class="card">
+            <div class="card-title">💨 Digestion</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Ballonnements</div><input class="fi" id="ballon" placeholder="Fréquence, moment"></div>
+              <div class="fg"><div class="fl">Fréquence selles</div><input class="fi" id="selles"></div>
+              <div class="fg"><div class="fl">Constipation</div><input class="fi" id="constip"></div>
+              <div class="fg"><div class="fl">Diarrhée</div><input class="fi" id="diarrhee"></div>
+              <div class="fg"><div class="fl">Douleurs digestives</div><input class="fi" id="doul_dig"></div>
+              <div class="fg"><div class="fl">RGO / Remontées acides</div><input class="fi" id="rgo"></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Notes libres — Digestion</div><textarea class="fi fta" id="note_digestion" placeholder="Observations, historique digestif…"></textarea></div>
+          </div>
+          <div class="card">
+            <div class="card-title">💛 Alimentation émotionnelle</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">TCA (présent / passé)</div><input class="fi" id="tca"></div>
+              <div class="fg"><div class="fl">Envies de sucre</div><div class="chips" id="c-sucre"><div class="chip" onclick="chip(this,'c-sucre')">Rarement</div><div class="chip" onclick="chip(this,'c-sucre')">Parfois</div><div class="chip" onclick="chip(this,'c-sucre')">Souvent</div><div class="chip" onclick="chip(this,'c-sucre')">Tout le temps</div></div></div>
+              <div class="fg"><div class="fl">Soif excessive</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Alimentation émotionnelle</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Émotions déclencheuses</div><input class="fi" id="emotion" placeholder="Stress, ennui, tristesse…"></div>
+              <div class="fg"><div class="fl">Sucré / salé ?</div><div class="chips" id="c-crav"><div class="chip" onclick="chip(this,'c-crav')">Sucré</div><div class="chip" onclick="chip(this,'c-crav')">Salé</div><div class="chip" onclick="chip(this,'c-crav')">Les deux</div></div></div>
+              <div class="fg"><div class="fl">Moment de la journée</div><input class="fi" id="moment_crav" placeholder="Ex : après-midi, soirée"></div>
+              <div class="fg"><div class="fl">Contraintes pratiques</div><input class="fi" id="contraintes" placeholder="Temps, famille, conjoint cuisine…"></div>
+            </div>
+            <div class="fg"><div class="fl">Nombreux régimes par le passé ?</div><div class="chips" id="c-regimes"><div class="chip" onclick="chip(this,'c-regimes')">Non</div><div class="chip" onclick="chip(this,'c-regimes')">Quelques-uns</div><div class="chip" onclick="chip(this,'c-regimes')">Oui, beaucoup</div></div></div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Notes libres — Alimentation émotionnelle</div><textarea class="fi fta" id="note_alim_emot" placeholder="Observations, contexte émotionnel…"></textarea></div>
+
+          <div class="card">
+            <div class="card-title">📋 Questionnaire habitudes alimentaires</div>
+            <div class="fg">
+              <div class="fl">Nombre de repas complets par jour</div>
+              <div class="chips" id="c-nb-repas">
+                <div class="chip" onclick="chip(this,'c-nb-repas')">Un</div>
+                <div class="chip" onclick="chip(this,'c-nb-repas')">Deux</div>
+                <div class="chip" onclick="chip(this,'c-nb-repas')">Trois</div>
+                <div class="chip" onclick="chip(this,'c-nb-repas')">Je saute souvent un repas</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Petit-déjeuner</div>
+              <div class="chips" id="c-pdej">
+                <div class="chip" onclick="chip(this,'c-pdej')">Oui</div>
+                <div class="chip" onclick="chip(this,'c-pdej')">Non</div>
+                <div class="chip" onclick="chip(this,'c-pdej')">Seulement certains jours</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Repas du midi — pris où ?</div>
+              <div class="chips" id="c-midi">
+                <div class="chip" onclick="chip(this,'c-midi')">Chez moi</div>
+                <div class="chip" onclick="chip(this,'c-midi')">Cantine / travail</div>
+                <div class="chip" onclick="chip(this,'c-midi')">Restaurant</div>
+                <div class="chip" onclick="chip(this,'c-midi')">Plat industriel</div>
+                <div class="chip" onclick="chip(this,'c-midi')">Plat maison apporté</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Comment vous sentez-vous après avoir mangé ?</div>
+              <div class="chips" id="c-apres-repas">
+                <div class="chip" onclick="chip(this,'c-apres-repas')">Bien et pleine d'énergie</div>
+                <div class="chip" onclick="chip(this,'c-apres-repas')">Ballonnements</div>
+                <div class="chip" onclick="chip(this,'c-apres-repas')">Fatiguée</div>
+                <div class="chip" onclick="chip(this,'c-apres-repas')">J'ai trop mangé / lourde</div>
+                <div class="chip" onclick="chip(this,'c-apres-repas')">Jamais rassasiée</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Repas festifs par semaine</div>
+              <div class="chips" id="c-festifs">
+                <div class="chip" onclick="chip(this,'c-festifs')">1 ou moins</div>
+                <div class="chip" onclick="chip(this,'c-festifs')">Plus d'une fois</div>
+                <div class="chip" onclick="chip(this,'c-festifs')">Plus de 3 fois</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Aimez-vous cuisiner ?</div>
+              <div class="chips" id="c-cuisiner">
+                <div class="chip" onclick="chip(this,'c-cuisiner')">Oui</div>
+                <div class="chip" onclick="chip(this,'c-cuisiner')">Non</div>
+                <div class="chip" onclick="chip(this,'c-cuisiner')">Un peu</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Grignotage</div>
+              <div class="chips" id="c-grignotage">
+                <div class="chip" onclick="chip(this,'c-grignotage')">Jamais</div>
+                <div class="chip" onclick="chip(this,'c-grignotage')">1x / semaine</div>
+                <div class="chip" onclick="chip(this,'c-grignotage')">+3x / semaine</div>
+                <div class="chip" onclick="chip(this,'c-grignotage')">Tous les jours</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Raison du grignotage <span style="font-weight:400;text-transform:none;font-size:11px">(plusieurs possibles)</span></div>
+              <div class="chips" id="c-raison-grig">
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Stress</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Fatigue</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Ennui</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Envie / plaisir</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Tentée par ce qui traîne</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-raison-grig')">Émotions difficiles</div>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="fl">Comportement face à l'alimentation <span style="font-weight:400;text-transform:none;font-size:11px">(plusieurs possibles)</span></div>
+              <div class="chips" id="c-compor-alim">
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Je mange quand je suis stressée</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Je mange dès que je rentre du travail</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Plus je suis fatiguée, plus je mange</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Je mange plus quand je suis en colère / frustrée</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Je mange pour me réconforter</div>
+                <div class="chip chip-multi" onclick="chipMulti(this,'c-compor-alim')">Je me restreins pour ne pas grossir</div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <!-- SPORT -->
+        <div class="section" id="s-sport">
+          <div class="card">
+            <div class="card-title">🏃 Activité physique</div>
+            <div class="fg"><div class="fl">Métier sédentaire ?</div><div class="chips" id="c-sedent"><div class="chip" onclick="chip(this,'c-sedent')">Très sédentaire</div><div class="chip" onclick="chip(this,'c-sedent')">50% debout</div><div class="chip" onclick="chip(this,'c-sedent')">Actif</div><div class="chip" onclick="chip(this,'c-sedent')">Très actif</div></div></div>
+            <div style="margin-top:14px">
+              <div class="fl" style="margin-bottom:9px">Semaine type</div>
+              <div class="sport-grid">
+                <div></div>
+                <div class="day-label">Lun</div><div class="day-label">Mar</div><div class="day-label">Mer</div><div class="day-label">Jeu</div><div class="day-label">Ven</div><div class="day-label">Sam</div><div class="day-label">Dim</div>
+                <div class="row-label">Marche</div>
+                <input class="fi" id="m_lun"><input class="fi" id="m_mar"><input class="fi" id="m_mer"><input class="fi" id="m_jeu"><input class="fi" id="m_ven"><input class="fi" id="m_sam"><input class="fi" id="m_dim">
+                <div class="row-label">Jardinage/ménage</div>
+                <input class="fi" id="j_lun"><input class="fi" id="j_mar"><input class="fi" id="j_mer"><input class="fi" id="j_jeu"><input class="fi" id="j_ven"><input class="fi" id="j_sam"><input class="fi" id="j_dim">
+                <div class="row-label">Sport 1</div>
+                <input class="fi" id="s1_lun"><input class="fi" id="s1_mar"><input class="fi" id="s1_mer"><input class="fi" id="s1_jeu"><input class="fi" id="s1_ven"><input class="fi" id="s1_sam"><input class="fi" id="s1_dim">
+                <div class="row-label">Sport 2</div>
+                <input class="fi" id="s2_lun"><input class="fi" id="s2_mar"><input class="fi" id="s2_mer"><input class="fi" id="s2_jeu"><input class="fi" id="s2_ven"><input class="fi" id="s2_sam"><input class="fi" id="s2_dim">
+              </div>
+            </div>
+            <div class="fg" style="margin-top:13px"><div class="fl">Nombre de pas moyen par jour</div><input class="fi" id="nb_pas" type="number" placeholder="Ex : 6000"></div>
+            <div class="fg" style="margin-top:4px"><div class="fl">Notes / contexte sport</div><textarea class="fi fta" id="sport_notes" placeholder="Irrégularité, historique, motivation…"></textarea></div>
+          </div>
+        </div>
+
+        <!-- MENTAL & SOMMEIL -->
+        <div class="section" id="s-mental">
+          <div class="card">
+            <div class="card-title">🧠 Mental</div>
+            <div class="score-grid">
+              <div class="sr"><span class="sl">Stress (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_stress" placeholder="—"><input class="fi sn" id="n_stress" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Anxiété (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_anxiete" placeholder="—"><input class="fi sn" id="n_anxiete" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Concentration (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_concent" placeholder="—"><input class="fi sn" id="n_concent" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Mémoire (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_memoire" placeholder="—"><input class="fi sn" id="n_memoire" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Fatigue (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_fatigue" placeholder="—" oninput="syncField('sc_fatigue','sc_thyf')"><input class="fi sn" id="n_fatigue" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Déprime (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_deprime" placeholder="—"><input class="fi sn" id="n_deprime" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Irritabilité (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_irrit" placeholder="—"><input class="fi sn" id="n_irrit" placeholder="note…"></div>
+              <div class="sr"><span class="sl">Motivation (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_motiv" placeholder="—"><input class="fi sn" id="n_motiv" placeholder="note…"></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Notes libres — Mental & stress</div><textarea class="fi fta" id="note_mental" placeholder="Contexte de vie, événements déclencheurs, burn-out…"></textarea></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🌙 Sommeil (PSQI)</div>
+            <div class="g2">
+              <div class="sr"><span class="sl">Qualité sommeil (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_sommeil" placeholder="—"></div>
+              <div class="fg"><div class="fl">Heure de coucher</div><input class="fi" id="coucher" placeholder="Ex : 22h30"></div>
+              <div class="fg"><div class="fl">Délai d'endormissement</div><input class="fi" id="endorm" placeholder="Ex : 10 min"></div>
+              <div class="fg"><div class="fl">Heure de lever</div><input class="fi" id="lever" placeholder="Ex : 6h30"></div>
+              <div class="fg"><div class="fl">Durée effective</div><input class="fi" id="duree_sommeil" placeholder="Ex : 7h"></div>
+              <div class="fg"><div class="fl">Réveils nocturnes</div><input class="fi" id="reveils" placeholder="Fréquence, heure"></div>
+              <div class="fg"><div class="fl">Cause des réveils</div><input class="fi" id="cause_reveil"></div>
+              <div class="fg"><div class="fl">Température chambre</div><input class="fi" id="temp_chambre"></div>
+              <div class="fg"><div class="fl">Bruit</div><input class="fi" id="bruit"></div>
+              <div class="fg"><div class="fl">Lumière</div><input class="fi" id="lumiere"></div>
+              <div class="fg"><div class="fl">Influence cycle menstruel</div><input class="fi" id="cycle_sommeil"></div>
+              <div class="fg"><div class="fl">Médicaments (et heures)</div><input class="fi" id="med_sommeil"></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Notes libres — Sommeil</div><textarea class="fi fta" id="note_sommeil" placeholder="Rituels, environnement, historique du trouble…"></textarea></div>
+          </div>
+        </div>
+
+        <!-- CORPS -->
+        <div class="section" id="s-corps">
+          <div class="card">
+            <div class="card-title">✨ Peau</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Cellulite</div><input class="fi" id="cellulite" placeholder="Localisation"></div>
+              <div class="fg"><div class="fl">Problèmes de peau</div><input class="fi" id="peau" placeholder="Acné, eczéma, peau sèche…"></div>
+              <div class="fg"><div class="fl">Perte de cheveux > normale</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Fragilité des ongles</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🦴 Articulations</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Douleurs chroniques</div><input class="fi" id="doul_chron" placeholder="Localisation, inflammation?"></div>
+              <div class="fg"><div class="fl">Douleurs aiguës</div><input class="fi" id="doul_aigu"></div>
+              <div class="fg"><div class="fl">Antécédents</div><input class="fi" id="articu_ant"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🦋 Thyroïde</div>
+            <div class="g2">
+              <div class="sr"><span class="sl">Fatigue (/10)</span><input class="sv" type="number" min="0" max="10" id="sc_thyf" placeholder="—"></div>
+              <div class="fg"><div class="fl">Fatigue dès le matin ?</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Cernes</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Frilosité</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Perte tiers externe sourcils</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Peau sèche (surtout jambes)</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Rétention d'eau</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Réveil avec yeux gonflés</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Tout semble au ralenti</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Mange peu (digestion difficile)</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🛡 Immunité</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Souvent malade ?</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Infections urinaires</div><input class="fi" id="itu" placeholder="Fréquence, traitement"></div>
+              <div class="fg"><div class="fl">Mycoses</div><input class="fi" id="mycoses" placeholder="Fréquence, traitement"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MENOPAUSE -->
+        <div class="section" id="s-meno">
+          <div class="card">
+            <div class="card-title">〰 Troubles climatériques</div>
+            <div class="g2">
+              <div class="fg"><div class="fl">Bouffées de chaleur</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button><button onclick="yn(this)">Par phases</button></div></div>
+              <div class="fg"><div class="fl">Fréquence</div><input class="fi" id="bdc_freq"></div>
+              <div class="fg"><div class="fl">Sueurs nocturnes</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button><button onclick="yn(this)">Par phases</button></div></div>
+              <div class="fg"><div class="fl">Fréquence sueurs nocturnes</div><input class="fi" id="sueurs_freq"></div>
+              <div class="fg"><div class="fl">Jour / Nuit</div><div class="chips" id="c-bdc"><div class="chip" onclick="chip(this,'c-bdc')">Plutôt jour</div><div class="chip" onclick="chip(this,'c-bdc')">Plutôt nuit</div><div class="chip" onclick="chip(this,'c-bdc')">Les deux</div></div></div>
+              <div class="fg"><div class="fl">Liées au stress ?</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button><button onclick="yn(this)">Accentuées</button></div></div>
+              <div class="fg"><div class="fl">Prise de poids</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Ceinture grasse</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Incontinence urinaire (à l'effort)</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Hyperactivité de la vessie</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Sécheresse vaginale</div><div class="yn"><button onclick="yn(this)">Non</button><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Par phases</button></div></div>
+              <div class="fg"><div class="fl">Libido</div><div class="chips" id="c-libido"><div class="chip" onclick="chip(this,'c-libido')">Conservée</div><div class="chip" onclick="chip(this,'c-libido')">Diminuée</div><div class="chip" onclick="chip(this,'c-libido')">Absente</div></div></div>
+              <div class="fg"><div class="fl">Règles très abondantes (perte fer)</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+              <div class="fg"><div class="fl">Syndrome pré-menstruel</div><div class="yn"><button onclick="yn(this)">Oui</button><button onclick="yn(this)">Non</button></div></div>
+            </div>
+            <div class="fg" style="margin-top:9px"><div class="fl">Autres</div><textarea class="fi fta" id="meno_autres"></textarea></div>
+          </div>
+        </div>
+
+        <!-- NEUROTRANSMETTEURS -->
+        <div class="section" id="s-neuro">
+          <div class="card">
+            <div class="card-title">⚡ Test neurotransmetteurs</div>
+            <div id="neuro-container"></div>
+          </div>
+        </div>
+
+        <!-- CALCULS POIDS -->
+        <div class="section" id="s-poids">
+          <div class="card">
+            <div class="card-title">⚖ Poids & besoins énergétiques</div>
+            <div class="g3">
+              <div class="fg"><div class="fl">Âge</div><input class="fi" id="c_age" type="number" placeholder="46" oninput="calcPoids()"></div>
+              <div class="fg"><div class="fl">Taille (m)</div><input class="fi" id="c_taille" type="number" step="0.01" placeholder="1.65" oninput="calcPoids()"></div>
+              <div class="fg"><div class="fl">Poids (kg)</div><input class="fi" id="c_poids" type="number" placeholder="65" oninput="calcPoids()"></div>
+              <div class="fg"><div class="fl">Tour de taille (cm)</div><input class="fi" id="c_waist" type="number" oninput="calcPoids()"></div>
+              <div class="fg"><div class="fl">Tour de hanches (cm)</div><input class="fi" id="c_hanche" type="number" oninput="calcPoids()"></div>
+              <div class="fg"><div class="fl">Poitrine (cm)</div><input class="fi" id="c_poitrine" type="number"></div>
+              <div class="fg"><div class="fl">Poids cible (kg)</div><input class="fi" id="c_cible" type="number" oninput="calcPoids()"></div>
+            </div>
+            <div class="poids-results" id="poids-results" style="display:none">
+              <div style="font-size:12px;color:var(--primary-dark);font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Résultats</div>
+              <div class="poids-vals" id="poids-vals"></div>
+              <div id="imc-gauge-wrap" style="margin-top:16px">
+                <div style="font-size:12px;color:var(--primary-dark);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:9px">Indice de masse corporelle</div>
+                <div style="position:relative;height:22px;border-radius:11px;overflow:hidden;background:#eee">
+                  <div style="position:absolute;inset:0;display:flex">
+                    <div style="flex:2.5;background:#7B9FD4"></div>
+                    <div style="flex:1.5;background:#a8c4e8"></div>
+                    <div style="flex:6.5;background:#7ab87a"></div>
+                    <div style="flex:5;background:#f5c97a"></div>
+                    <div style="flex:5;background:#ef8358"></div>
+                    <div style="flex:4.5;background:#e05555"></div>
+                    <div style="flex:5;background:#a83232"></div>
+                  </div>
+                  <div id="imc-cursor" style="position:absolute;top:0;bottom:0;width:3px;background:white;border-radius:2px;box-shadow:0 0 4px rgba(0,0,0,0.4);transform:translateX(-50%);transition:left 0.4s ease"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--text3)">
+                  <span>16</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px">
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#7B9FD4;color:white">Maigreur</span>
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#7ab87a;color:white">Normal</span>
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#f5c97a;color:#7a4d10">Surpoids</span>
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#ef8358;color:white">Obésité mod.</span>
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#e05555;color:white">Obésité sév.</span>
+                  <span style="font-size:12px;padding:2px 9px;border-radius:20px;background:#a83232;color:white">Obésité morbide</span>
+                </div>
+                <div id="imc-label" style="margin-top:9px;font-size:14px;font-weight:500;color:var(--text)"></div>
+              </div>
+              <div style="margin-top:14px;font-size:12px;color:var(--primary-dark);font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Besoins caloriques (sur poids cible)</div>
+              <div class="poids-vals" id="cal-vals"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUIVI -->
+        <div class="section" id="s-suivi">
+          <div class="card">
+            <div class="card-title">📅 Suivi des consultations</div>
+            <div class="suivi-wrap">
+              <table class="suivi-table">
+                <thead><tr>
+                  <th style="width:100px">Date</th>
+                  <th>Bilan de la période</th>
+                  <th>Ce que j'ai expliqué</th>
+                  <th>Recommandations</th>
+                  <th style="width:120px">Outils envoyés</th>
+                  <th style="width:120px">Complémentation</th>
+                </tr></thead>
+                <tbody id="suivi-body"></tbody>
+              </table>
+            </div>
+            <button class="btn-add-row" onclick="addSuiviRow()">＋ Ajouter une consultation</button>
+          </div>
+        </div>
+
+        <!-- PAIEMENTS CLIENT -->
+        <div class="section" id="s-paiements">
+          <div class="card">
+            <div class="card-title">💳 Paiements</div>
+            <div class="paie-v5-wrap">
+              <table class="paie-v5-table">
+                <thead><tr>
+                  <th style="width:120px">Date</th>
+                  <th style="width:110px">Montant (€)</th>
+                  <th>Moyen de paiement</th>
+                  <th>Notes</th>
+                  <th style="width:36px"></th>
+                </tr></thead>
+                <tbody id="paie-body"></tbody>
+              </table>
+            </div>
+            <button class="btn-add-row" onclick="addPaieRow()">＋ Ajouter un paiement</button>
+            <div class="paie-total-row">
+              <span class="paie-total-label">Total encaissé</span>
+              <span class="paie-total-val" id="paie-total">0 €</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- DOCUMENTS -->
+        <div class="section" id="s-documents">
+          <div class="card">
+            <div class="card-title">📎 Documents de la cliente</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Ajoutez des fichiers locaux (par chemin) ou des liens URL. Si vous déplacez un fichier, le lien sera cassé — conservez vos fichiers à un emplacement fixe.</p>
+            <div id="docs-list"></div>
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+              <button class="btn-add-row" onclick="addDocFile()">📂 Ajouter un fichier local</button>
+              <button class="btn-add-row" onclick="addDocUrl()">🔗 Ajouter un lien URL</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ÉVOLUTION -->
+        <div class="section" id="s-evolution">
+          <div class="card">
+            <div class="card-title">📈 Évolution — Suivi longitudinal</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:4px">Première entrée = données initiales du dossier. Ajoutez des entrées au fil des séances.</p>
+            <div id="evo-creation-date" style="font-size:12px;color:var(--text3);margin-bottom:16px"></div>
+            <div id="evolution-container"></div>
+          </div>
+        </div>
+
+        <!-- SYNTHÈSE -->
+        <div class="section" id="s-synthese">
+          <div class="card">
+            <div class="card-title">📋 Synthèse du dossier</div>
+            <button class="synth-print-btn" onclick="window.print()">🖨 Imprimer / Exporter en PDF</button>
+            <div id="synth-content"></div>
+          </div>
+        </div>
+
+      </div><!-- /sections -->
+
+      <!-- Flèches navigation BAS -->
+      <div class="nav-arrows-bottom">
+        <button class="nav-arrow-btn" id="btn-prev-bot" onclick="navTab(-1)">← Précédent</button>
+        <span class="nav-tab-indicator" id="tab-indicator-bot"></span>
+        <button class="nav-arrow-btn" id="btn-next-bot" onclick="navTab(1)">Suivant →</button>
+      </div>
+
+    </div><!-- /form-area -->
+
+    <!-- PAGE RESSOURCES -->
+    <div id="ressources-area" style="display:none">
+      <div class="form-header">
+        <div class="fh-left">
+          <div class="fh-name">📚 Bibliothèque Ressources</div>
+          <div class="fh-meta">Fichiers et liens par thématique</div>
+        </div>
+        <div class="fh-actions"></div>
+      </div>
+      <div class="ressources-page" id="ressources-content"></div>
+    </div>
+
+    <!-- PAGE PAIEMENTS GLOBAUX -->
+    <div id="global-paie-area" style="display:none">
+      <div class="form-header">
+        <div class="fh-left">
+          <div class="fh-name">💰 Paiements — Vue globale</div>
+          <div class="fh-meta">Agrégation de toutes les clientes</div>
+        </div>
+        <div class="fh-actions">
+          <button class="btn-export-csv" onclick="exportPaiementsCSV()">⬇ Exporter CSV</button>
+        </div>
+      </div>
+      <div class="global-paie-page">
+        <div class="gp-header">
+          <div class="gp-title"></div>
+          <div class="gp-filters">
+            <button class="gp-filter-btn on" onclick="setGpFilter('mois',this)">Ce mois</button>
+            <button class="gp-filter-btn" onclick="setGpFilter('trimestre',this)">Trimestre</button>
+            <button class="gp-filter-btn" onclick="setGpFilter('annee',this)">Année</button>
+            <button class="gp-filter-btn" onclick="setGpFilter('tout',this)">Tout</button>
+            <button class="gp-filter-btn" onclick="setGpFilter('custom',this)" id="btn-custom-filter">Dates perso.</button>
+            <div class="gp-custom-dates" id="gp-custom-dates" style="display:none">
+              <input type="date" id="gp-date-from" onchange="renderGlobalPaiements()">
+              <span style="color:var(--text3)">→</span>
+              <input type="date" id="gp-date-to" onchange="renderGlobalPaiements()">
+            </div>
+          </div>
+        </div>
+        <div class="gp-stats" id="gp-stats"></div>
+        <div class="gp-table-wrap">
+          <table class="gp-table" id="gp-table">
+            <thead><tr>
+              <th>Date</th>
+              <th>Cliente</th>
+              <th>Montant</th>
+              <th>Moyen</th>
+              <th>Notes</th>
+            </tr></thead>
+            <tbody id="gp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- Modal suppression -->
+<div class="modal-overlay hidden" id="delete-modal">
+  <div class="modal">
+    <h3>Supprimer cette cliente ?</h3>
+    <p>Toutes les données de <strong id="delete-name"></strong> seront définitivement supprimées. Cette action est irréversible.</p>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal()">Annuler</button>
+      <button class="btn-sm danger" onclick="deleteClient()">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal paramètres -->
+<div class="settings-overlay hidden" id="settings-overlay">
+  <div class="settings-panel">
+    <h2>⚙ Paramètres</h2>
+    <div class="settings-section">
+      <div class="settings-label">Nom de votre cabinet / entreprise</div>
+      <input class="fi" id="setting-name" placeholder="Ex : Julie Dupont Coaching" style="margin-top:6px">
+      <div style="font-size:12px;color:var(--text3);margin-top:5px">S'affichera dans la barre latérale sous Méno'Base</div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-label">Couleur de l'interface</div>
+      <div class="palette-grid">
+        <button class="palette-btn active" style="background:#7a8c6e" data-palette="" title="Sauge" onclick="applyPalette('',this)"></button>
+        <button class="palette-btn" style="background:#b07ca0" data-palette="rose" title="Rose poudré" onclick="applyPalette('rose',this)"></button>
+        <button class="palette-btn" style="background:#c9603a" data-palette="terracotta" title="Terracotta" onclick="applyPalette('terracotta',this)"></button>
+        <button class="palette-btn" style="background:#4a9e9e" data-palette="vertdeau" title="Vert d'eau" onclick="applyPalette('vertdeau',this)"></button>
+        <button class="palette-btn" style="background:#8b6faa" data-palette="mauve" title="Mauve" onclick="applyPalette('mauve',this)"></button>
+        <button class="palette-btn" style="background:#2e5c8a" data-palette="marine" title="Bleu marine" onclick="applyPalette('marine',this)"></button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:10px">Survolez les couleurs pour voir le nom</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+      <button class="btn-sm danger" onclick="resetStorage()">🗑 Réinitialiser</button>
+      <button class="btn-sm" onclick="closeSettings()">Annuler</button>
+      <button class="btn-sm btn-primary" onclick="saveSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ═══════════════════════════════════════
+// ACTIVATION & PIN
+// ═══════════════════════════════════════
+const SECRET = 'menobase2024joanna';
+const PIN_KEY = 'menobase_pin_v1';
+const ACT_KEY = 'menobase_activated_v1';
+const MAX_ATTEMPTS = 5;
+let pinCreateBuf = '';
+let pinCreateStep = 'first';
+let pinUnlockBuf = '';
+
+function simpleHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  let r = '';
+  let x = h;
+  for (let i = 0; i < 4; i++) { r += ('00000000' + x.toString(16)).slice(-8); x = (Math.imul(x, 0x01000193) + 0x811c9dc5) >>> 0; }
+  return r.substring(0, 16).toUpperCase();
+}
+
+function hashPin(pin) {
+  let h = 0x9747b28c;
+  const s = pin + 'menobase_pin_salt';
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x5bd1e995) >>> 0; h ^= h >>> 15; }
+  return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+}
+
+function generateKey(name) {
+  return simpleHash(name.toLowerCase().trim() + SECRET);
+}
+
+function checkKey(name, key) {
+  return key.toUpperCase().trim() === generateKey(name);
+}
+
+function showLockScreen(id) {
+  ['screen-activation','screen-create-pin','screen-pin','screen-forgot'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.style.display = (s === id) ? 'flex' : 'none';
+  });
+}
+
+function showPinScreen() { showLockScreen('screen-pin'); }
+function showForgot() {
+  document.getElementById('forgot-name').value = '';
+  document.getElementById('forgot-key').value = '';
+  document.getElementById('forgot-error').textContent = '';
+  showLockScreen('screen-forgot');
+}
+
+function unlockApp() {
+  ['screen-activation','screen-create-pin','screen-pin','screen-forgot'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function initAuth() {
+  var activated = localStorage.getItem(ACT_KEY);
+  var pinHash = localStorage.getItem(PIN_KEY);
+  if (!activated) {
+    showLockScreen('screen-activation');
+  } else if (!pinHash) {
+    pinCreateBuf = ''; pinCreateStep = 'first';
+    document.getElementById('create-pin-sub').textContent = 'Choisissez un code a 6 chiffres pour proteger vos donnees.';
+    showLockScreen('screen-create-pin');
+  } else {
+    var attempts = parseInt(localStorage.getItem('menobase_pin_attempts') || '0');
+    if (attempts >= MAX_ATTEMPTS) {
+      document.getElementById('pin-error').textContent = 'Trop de tentatives. Utilisez Code oublie.';
+    }
+    showLockScreen('screen-pin');
+  }
+}
+
+function verifyActivation() {
+  var name = document.getElementById('act-name').value.trim();
+  var key = document.getElementById('act-key').value.trim();
+  var errEl = document.getElementById('act-error');
+  if (!name || !key) { errEl.textContent = 'Veuillez remplir les deux champs.'; return; }
+  if (checkKey(name, key)) {
+    localStorage.setItem(ACT_KEY, '1');
+    errEl.textContent = '';
+    pinCreateBuf = ''; pinCreateStep = 'first';
+    document.getElementById('create-pin-sub').textContent = 'Choisissez un code a 6 chiffres pour proteger vos donnees.';
+    showLockScreen('screen-create-pin');
+  } else {
+    errEl.textContent = 'Cle incorrecte. Verifiez votre nom et votre cle.';
+    document.getElementById('act-key').value = '';
+  }
+}
+
+function updateDots(dotsId, val) {
+  var dots = document.querySelectorAll('#' + dotsId + ' .pin-dot');
+  dots.forEach(function(d, i) { d.classList.toggle('filled', i < val.length); });
+}
+
+function pinCreate(digit) {
+  if (pinCreateBuf.length >= 6) return;
+  pinCreateBuf += digit;
+  updateDots('create-pin-dots', pinCreateBuf);
+  if (pinCreateBuf.length === 6) {
+    setTimeout(function() {
+      if (pinCreateStep === 'first') {
+        var first = pinCreateBuf;
+        pinCreateBuf = '';
+        pinCreateStep = 'confirm';
+        document.getElementById('create-pin-sub').textContent = 'Confirmez votre code PIN.';
+        document.getElementById('create-pin-error').textContent = '';
+        updateDots('create-pin-dots', '');
+        pinCreateBuf = '';
+        // Stocker le premier PIN temporairement
+        window._pinFirst = first;
+      } else {
+        if (pinCreateBuf === window._pinFirst) {
+          localStorage.setItem(PIN_KEY, hashPin(pinCreateBuf));
+          localStorage.removeItem('menobase_pin_attempts');
+          window._pinFirst = null;
+          pinCreateBuf = ''; pinCreateStep = 'first';
+          unlockApp();
+        } else {
+          document.getElementById('create-pin-error').textContent = 'Les codes ne correspondent pas. Recommencez.';
+          pinCreateBuf = ''; pinCreateStep = 'first';
+          window._pinFirst = null;
+          document.getElementById('create-pin-sub').textContent = 'Choisissez un code a 6 chiffres pour proteger vos donnees.';
+          updateDots('create-pin-dots', '');
+        }
+      }
+    }, 300);
+  }
+}
+
+function pinCreateDel() {
+  pinCreateBuf = pinCreateBuf.slice(0, -1);
+  updateDots('create-pin-dots', pinCreateBuf);
+}
+
+function pinUnlock(digit) {
+  if (pinUnlockBuf.length >= 6) return;
+  pinUnlockBuf += digit;
+  updateDots('pin-dots', pinUnlockBuf);
+  if (pinUnlockBuf.length === 6) {
+    setTimeout(function() {
+      var attempts = parseInt(localStorage.getItem('menobase_pin_attempts') || '0');
+      if (attempts >= MAX_ATTEMPTS) {
+        document.getElementById('pin-error').textContent = 'Trop de tentatives. Utilisez Code oublie.';
+        pinUnlockBuf = ''; updateDots('pin-dots', ''); return;
+      }
+      if (hashPin(pinUnlockBuf) === localStorage.getItem(PIN_KEY)) {
+        localStorage.removeItem('menobase_pin_attempts');
+        pinUnlockBuf = ''; unlockApp();
+      } else {
+        var na = attempts + 1;
+        localStorage.setItem('menobase_pin_attempts', na);
+        var rem = MAX_ATTEMPTS - na;
+        document.getElementById('pin-error').textContent = rem > 0
+          ? 'Code incorrect. ' + rem + ' tentative' + (rem > 1 ? 's' : '') + ' restante' + (rem > 1 ? 's' : '') + '.'
+          : 'Trop de tentatives. Utilisez Code oublie.';
+        pinUnlockBuf = ''; updateDots('pin-dots', '');
+      }
+    }, 300);
+  }
+}
+
+function pinUnlockDel() {
+  pinUnlockBuf = pinUnlockBuf.slice(0, -1);
+  updateDots('pin-dots', pinUnlockBuf);
+}
+
+function verifyForgot() {
+  var name = document.getElementById('forgot-name').value.trim();
+  var key = document.getElementById('forgot-key').value.trim();
+  var errEl = document.getElementById('forgot-error');
+  if (!name || !key) { errEl.textContent = 'Veuillez remplir les deux champs.'; return; }
+  if (checkKey(name, key)) {
+    localStorage.removeItem(PIN_KEY);
+    localStorage.removeItem('menobase_pin_attempts');
+    pinCreateBuf = ''; pinCreateStep = 'first';
+    document.getElementById('create-pin-sub').textContent = 'Choisissez un nouveau code a 6 chiffres.';
+    updateDots('create-pin-dots', '');
+    showLockScreen('screen-create-pin');
+  } else {
+    errEl.textContent = 'Cle incorrecte. Verifiez votre nom et votre cle.';
+    document.getElementById('forgot-key').value = '';
+  }
+}
+
+
+// ═══════════════════════════════════════
+// DONNÉES & ÉTAT
+// ═══════════════════════════════════════
+const STORAGE_KEY = 'anamnese_clients_v1';
+const SETTINGS_KEY = 'menobase_settings_v1';
+let clients = {};
+let currentId = null;
+let settings = { name: '', palette: '' };
+
+const neuroData = [
+  {name:'Dopamine', items:['Fatigue','Besoin d\'isolement','Procrastination','Inertie / faible esprit d\'initiative','Éviction des contacts sociaux','Sensation de léthargie','Envie de sucres, caféine et/ou alcool','Sujet à la dépendance','Faible libido','Stress à faire des choix'], reco:'Microbiote, Tyrosine, Rhodiole, Phénylalanine, Vit. B'},
+  {name:'Acétylcholine', items:['Peu de fantaisie / créativité','Amnésie','Pensée et réactions plus lentes','Difficulté à imaginer des solutions','Envie d\'aliments gras','Forte critique intérieure','Difficultés à respirer','Moindre tonicité musculaire'], reco:'L-carnitine, L-tyrosine, Vit. B'},
+  {name:'GABA', items:['Sensible aux stimuli','Anxiété','Rapidement paniquée','Difficulté à trouver le sommeil','Pas de paix intérieure','Difficultés à se détendre','Sentiment d\'être traquée','Perfectionniste','Alimentation excessive'], reco:'Cohérence cardiaque, microbiote, Mg, Valériane, Eschscholzia, Passiflore'},
+  {name:'Sérotonine', items:['Dépression','Difficulté à s\'endormir','Maux de tête','Envie de sucres','Vite irritée','Intestin agité','Peu flexible','Inébranlable','Goût pour la solitude','Triste'], reco:'Microbiote, cohérence cardiaque, journal gratitude, Mg, Vit. B, Griffonia, Millepertuis'},
+  {name:'Adrénaline', items:['Palpitations','Souffle court','Sensation de chaleur','Transpiration'], reco:'Cohérence cardiaque, Mg, Aubépine'},
+  {name:'Inhibition nerf vague', items:['Troubles gastriques','Reflux','Autres troubles digestifs'], reco:'Cohérence cardiaque, stimulation nerf vague, Mg, Mélisse'},
+  {name:'Excès de cortisol', items:['Speed','Électrique','Empêche de dormir','Ne tient pas en place, aux aguets'], reco:'Cohérence cardiaque, pleine conscience, Mg, Ashwagandha, Rhodiole, Safran'}
+];
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+async function init() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) { const p = JSON.parse(saved); if (p && typeof p === 'object' && !Array.isArray(p)) clients = p; }
+  } catch(e) { localStorage.removeItem(STORAGE_KEY); clients = {}; }
+  loadSettings();
+  loadRessources();
+  buildNeuro();
+  buildBilans({});
+  renderClientList();
+  addSuiviRow();
+  document.getElementById('date_bilan').value = new Date().toISOString().split('T')[0];
+  // Ménopause chirurgicale toggle
+  document.querySelectorAll('#c-meno-stat .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      const show = c.textContent === 'Ménopause chirurgicale' && c.classList.contains('on');
+      document.getElementById('fg-meno-chir').style.display = show ? 'block' : 'none';
+    });
+  });
+  initAuth();
+}
+
+// ═══════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════
+function loadSettings() {
+  const s = localStorage.getItem(SETTINGS_KEY);
+  if (s) settings = JSON.parse(s);
+  applySettingsToUI();
+}
+
+function applySettingsToUI() {
+  const name = settings.name || '';
+  const palette = settings.palette || '';
+  // Sidebar
+  document.getElementById('sb-sub').textContent = name || 'Outil de suivi ménopause';
+  // Welcome
+  document.getElementById('welcome-sub').textContent = name ? name : 'Outil de suivi ménopause';
+  // Palette
+  document.body.className = palette ? 'palette-' + palette : '';
+  // Sync palette buttons
+  document.querySelectorAll('.palette-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.palette === palette);
+  });
+}
+
+function openSettings() {
+  document.getElementById('setting-name').value = settings.name || '';
+  document.querySelectorAll('.palette-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.palette === (settings.palette || ''));
+  });
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+
+function applyPalette(p, btn) {
+  document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.body.className = p ? 'palette-' + p : '';
+}
+
+function saveSettings() {
+  const activePaletteBtn = document.querySelector('.palette-btn.active');
+  settings.name = document.getElementById('setting-name').value.trim();
+  settings.palette = activePaletteBtn ? activePaletteBtn.dataset.palette : '';
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  applySettingsToUI();
+  closeSettings();
+}
+
+// ═══════════════════════════════════════
+// GESTION CLIENTES
+// ═══════════════════════════════════════
+function newClient() {
+  const id = 'c_' + Date.now();
+  clients[id] = { id, createdAt: new Date().toISOString(), data: {} };
+  saveToStorage();
+  loadClient(id);
+  renderClientList();
+  document.getElementById('prenom').focus();
+}
+
+function loadClient(id) {
+  // Masquer les pages spéciales
+  document.getElementById('ressources-area').style.display = 'none';
+  document.getElementById('global-paie-area').style.display = 'none';
+  document.querySelectorAll('.btn-special').forEach(b => b.classList.remove('active-view'));
+  currentId = id;
+  const client = clients[id];
+  clearForm();
+  if (client.data) fillForm(client.data);
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('form-area').style.display = 'block';
+  document.getElementById('poids-results').style.display = 'none';
+  updateHeader();
+  // Activer onglet Infos par défaut (1er onglet)
+  const infosTab = document.querySelector('.tab[onclick*="infos"]');
+  if (infosTab) showTab('infos', infosTab);
+  highlightActive();
+  document.getElementById('suivi-body').innerHTML = '';
+  if (client.data && client.data.suivi && client.data.suivi.length > 0) {
+    client.data.suivi.forEach(row => addSuiviRow(row));
+  } else {
+    addSuiviRow();
+  }
+  // Paiements
+  document.getElementById('paie-body').innerHTML = '';
+  if (client.data && client.data.paiements && client.data.paiements.length > 0) {
+    client.data.paiements.forEach(row => addPaieRow(row));
+  }
+  calcPaieTotal();
+  // Bilan sanguin init
+  buildBilans((client.data && client.data.bilans) || {});
+  // Flags rouge/orange
+  setTimeout(() => {
+    initFlags();
+    if (client.data && client.data.flags) fillFlags(client.data.flags);
+    if (client.data && client.data.profil) fillChipMulti('c-profil', client.data.profil);
+  }, 300);
+  // Meno chir
+  const menoStat = (client.data && client.data['c-meno-stat']) || '';
+  document.getElementById('fg-meno-chir').style.display = menoStat === 'Ménopause chirurgicale' ? 'block' : 'none';
+}
+
+function saveClient() {
+  if (!currentId) return;
+  clients[currentId].data = readForm();
+  clients[currentId].updatedAt = new Date().toISOString();
+  saveToStorage();
+  renderClientList();
+  const badge = document.getElementById('save-badge');
+  badge.textContent = '✓ Sauvegardé';
+  setTimeout(() => badge.textContent = '', 2500);
+}
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+}
+
+function confirmDelete() {
+  const p = document.getElementById('prenom').value || '';
+  const n = document.getElementById('nom').value || '';
+  document.getElementById('delete-name').textContent = (p + ' ' + n).trim() || 'cette cliente';
+  document.getElementById('delete-modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('delete-modal').classList.add('hidden'); }
+function deleteClient() {
+  delete clients[currentId];
+  saveToStorage();
+  currentId = null;
+  closeModal();
+  renderClientList();
+  document.getElementById('welcome').style.display = 'flex';
+  document.getElementById('form-area').style.display = 'none';
+}
+
+// ═══════════════════════════════════════
+// LISTE CLIENTS
+// ═══════════════════════════════════════
+function renderClientList(filter = '') {
+  const list = document.getElementById('client-list');
+  const ids = Object.keys(clients).sort((a, b) => {
+    const da = clients[a].updatedAt || clients[a].createdAt;
+    const db = clients[b].updatedAt || clients[b].createdAt;
+    return db.localeCompare(da);
+  });
+  const filtered = ids.filter(id => {
+    const d = clients[id].data || {};
+    const name = ((d.prenom || '') + ' ' + (d.nom || '')).toLowerCase();
+    return name.includes(filter.toLowerCase());
+  });
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="sb-empty">${filter ? 'Aucun résultat.' : 'Aucune cliente encore.<br>Cliquez sur "Nouveau dossier".'}</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(id => {
+    const d = clients[id].data || {};
+    const name = ((d.prenom || '') + ' ' + (d.nom || '')).trim() || 'Sans nom';
+    const profession = d.profession || '';
+    const date = clients[id].updatedAt ? new Date(clients[id].updatedAt).toLocaleDateString('fr-FR') : '';
+    const isActive = id === currentId ? ' active' : '';
+    return `<div class="client-item${isActive}" onclick="loadClient('${id}')">
+      <div class="ci-name">${name}</div>
+      ${profession ? `<div class="ci-info">${profession}</div>` : ''}
+      ${date ? `<div class="ci-date">Modifié le ${date}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function highlightActive() {
+  renderClientList(document.getElementById('search-input').value);
+}
+
+function filterClients() {
+  renderClientList(document.getElementById('search-input').value);
+}
+
+// ═══════════════════════════════════════
+// FORM IDS
+// ═══════════════════════════════════════
+const INPUT_IDS = ['prenom','nom','ddn','date_bilan','obj1','obj2','obj3','profession','email','tel','adresse','medecin','mal_act','mal_pass','antecedents','traitements','complements','taille','poids','poids_det','regime','intolerances','allergies','repas','hydrat','sc_faim','sc_satiete','ballon','selles','constip','diarrhee','doul_dig','rgo','tca','emotion','moment_crav','contraintes','sport_notes','nb_pas','sc_stress','n_stress','sc_anxiete','n_anxiete','sc_concent','n_concent','sc_memoire','n_memoire','sc_fatigue','n_fatigue','sc_deprime','n_deprime','sc_irrit','n_irrit','sc_motiv','n_motiv','sc_sommeil','coucher','endorm','lever','duree_sommeil','reveils','cause_reveil','temp_chambre','bruit','lumiere','cycle_sommeil','med_sommeil','cellulite','peau','doul_chron','doul_aigu','articu_ant','sc_thyf','itu','mycoses','bdc_freq','sueurs_freq','meno_autres','c_age','c_taille','c_poids','c_waist','c_hanche','c_poitrine','c_cible','m_lun','m_mar','m_mer','m_jeu','m_ven','m_sam','m_dim','j_lun','j_mar','j_mer','j_jeu','j_ven','j_sam','j_dim','s1_lun','s1_mar','s1_mer','s1_jeu','s1_ven','s1_sam','s1_dim','s2_lun','s2_mar','s2_mer','s2_jeu','s2_ven','s2_sam','s2_dim','note_medical','note_alim_hab','note_digestion','note_alim_emot','note_mental','note_sommeil','meno_chir_age','resume_rdv'];
+
+const CHIP_IDS = ['c-suivi','c-meno-stat','c-tabac','c-vitesse','c-alcool','c-sucre','c-crav','c-regimes','c-sedent','c-bdc','c-libido','c-nb-repas','c-pdej','c-midi','c-apres-repas','c-festifs','c-cuisiner','c-grignotage'];
+
+function readForm() {
+  const data = {};
+  INPUT_IDS.forEach(id => { const el = document.getElementById(id); if (el) data[id] = el.value; });
+  CHIP_IDS.forEach(grp => {
+    const el = document.querySelector(`#${grp} .chip.on`);
+    data[grp] = el ? el.textContent : '';
+  });
+  document.querySelectorAll('.yn').forEach((yn, i) => {
+    const active = yn.querySelector('button.on');
+    yn.dataset.idx = i;
+    data['yn_' + i] = active ? active.textContent : '';
+  });
+  neuroData.forEach((_, bi) => {
+    const checks = document.querySelectorAll(`[id^="n${bi}_"]`);
+    checks.forEach((cb, ii) => { data[`n${bi}_${ii}`] = cb.checked; });
+  });
+  const suivi = [];
+  document.querySelectorAll('#suivi-body tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input, textarea');
+    suivi.push(Array.from(inputs).map(el => el.value));
+  });
+  data.suivi = suivi;
+  const paiements = [];
+  document.querySelectorAll('#paie-body tr').forEach(tr => {
+    const dateEl = tr.querySelector('input[type=date]');
+    const montantEl = tr.querySelector('input[data-role=montant]');
+    const notesEl = tr.querySelector('input[data-role=notes]');
+    const moyenBtn = tr.querySelector('.moyen-btn.on');
+    paiements.push({
+      date: dateEl ? dateEl.value : '',
+      montant: montantEl ? montantEl.value : '',
+      moyen: moyenBtn ? moyenBtn.textContent : '',
+      notes: notesEl ? notesEl.value : ''
+    });
+  });
+  data.paiements = paiements;
+  // Bilan sanguin avec historique
+  data.bilans = readBilans();
+  // Objectifs supplémentaires
+  data.objsExtra = readObjsExtra();
+  // Documents
+  data.documents = readDocuments();
+  // Évolution
+  data.evolution = readEvolution();
+  // Flags rouge/orange
+  data.flags = readFlags();
+  // Profil multi
+  data.profil = readChipMulti('c-profil');
+  data['c-raison-grig'] = readChipMulti('c-raison-grig');
+  data['c-compor-alim'] = readChipMulti('c-compor-alim');
+  data.postit = readPostit();
+  return data;
+}
+
+function fillForm(data) {
+  INPUT_IDS.forEach(id => { const el = document.getElementById(id); if (el && data[id] !== undefined) el.value = data[id]; });
+  CHIP_IDS.forEach(grp => {
+    document.querySelectorAll(`#${grp} .chip`).forEach(c => {
+      c.classList.toggle('on', c.textContent === data[grp]);
+    });
+  });
+  document.querySelectorAll('.yn').forEach((yn, i) => {
+    yn.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('on', btn.textContent === data['yn_' + i]);
+    });
+  });
+  neuroData.forEach((_, bi) => {
+    const checks = document.querySelectorAll(`[id^="n${bi}_"]`);
+    checks.forEach((cb, ii) => { cb.checked = !!data[`n${bi}_${ii}`]; });
+    updateNeuro(bi, neuroData[bi].items.length);
+  });
+  // Bilan sanguin
+  buildBilans(data.bilans || {});
+  // Objectifs supplémentaires
+  fillObjsExtra(data.objsExtra || []);
+  // Documents
+  fillDocuments(data.documents || []);
+  // Évolution
+  fillEvolution(data.evolution || {}, data);
+  if (data['c-raison-grig']) fillChipMulti('c-raison-grig', data['c-raison-grig']);
+  if (data['c-compor-alim']) fillChipMulti('c-compor-alim', data['c-compor-alim']);
+  fillPostit(data.postit || []);
+  calcPoids();
+  // Sync auto poids/taille/âge vers onglet Poids
+  setTimeout(() => syncPoidsToCalc(), 50);
+}
+
+function clearForm() {
+  INPUT_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.querySelectorAll('.chip.on, .yn button.on').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; });
+  neuroData.forEach((_, bi) => updateNeuro(bi, neuroData[bi].items.length));
+  document.getElementById('suivi-body').innerHTML = '';
+  document.getElementById('paie-body').innerHTML = '';
+  document.getElementById('date_bilan').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fg-meno-chir').style.display = 'none';
+  // Réinitialiser objectifs
+  const objContainer = document.getElementById('objectifs-container');
+  if (objContainer) {
+    objContainer.innerHTML = `
+      <div class="fg"><div class="fl">Objectif 1 (principal)</div><input class="fi" id="obj1" placeholder="Ex : perte de poids, retrouver de l'énergie…"></div>
+      <div class="fg"><div class="fl">Objectif 2</div><input class="fi" id="obj2"></div>
+      <div class="fg"><div class="fl">Objectif 3</div><input class="fi" id="obj3"></div>`;
+  }
+  // Bilans
+  buildBilans({});
+  // Documents
+  fillDocuments([]);
+  // Évolution
+  fillEvolution({}, {});
+  // Profil
+  document.querySelectorAll('#c-profil .chip-multi').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('#c-raison-grig .chip-multi').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll('#c-compor-alim .chip-multi').forEach(c => c.classList.remove('on'));
+  fillPostit([]);
+  // Flags
+  document.querySelectorAll('.flag-btn').forEach(btn => {
+    btn.dataset.state = 'normal';
+    btn.className = 'flag-btn';
+    const fl = btn.closest('.fl');
+    if (fl) fl.className = 'fl';
+  });
+  calcPaieTotal();
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION TABS
+// ═══════════════════════════════════════
+const TAB_ORDER = ['infos','motif','medical','alim','sport','mental','corps','meno','neuro','poids','suivi','paiements','documents','evolution','synthese'];
+const TAB_LABELS = ['Infos personnelles','Motifs','Médical','Alimentation','Sport','Mental & sommeil','Corps','Ménopause','Neurotransmetteurs','Calculs poids','Suivi','Paiements','Documents','Évolution','Synthèse'];
+
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const section = document.getElementById('s-' + id);
+  if (section) section.classList.add('active');
+  if (btn) btn.classList.add('active');
+  updateNavArrows();
+  if (id === 'synthese') buildSynthese();
+  if (id === 'evolution') refreshEvoInitValues();
+  // Réappliquer les flags sur le nouvel onglet visible
+  setTimeout(() => {
+    initFlags();
+    if (currentId && clients[currentId] && clients[currentId].data && clients[currentId].data.flags) {
+      fillFlags(clients[currentId].data.flags);
+    }
+  }, 50);
+  document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getCurrentTabIndex() {
+  const activeTab = document.querySelector('.tab.active');
+  if (!activeTab) return 1;
+  const onclick = activeTab.getAttribute('onclick') || '';
+  const match = onclick.match(/showTab\('([^']+)'/);
+  if (!match) return 1;
+  return TAB_ORDER.indexOf(match[1]);
+}
+
+function updateNavArrows() {
+  const idx = getCurrentTabIndex();
+  ['btn-prev','btn-prev-bot'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = idx <= 0;
+  });
+  ['btn-next','btn-next-bot'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = idx >= TAB_ORDER.length - 1;
+  });
+  const label = `${idx + 1} / ${TAB_ORDER.length} — ${TAB_LABELS[idx]}`;
+  ['tab-indicator','tab-indicator-bot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+}
+
+function navTab(direction) {
+  const idx = getCurrentTabIndex();
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= TAB_ORDER.length) return;
+  const tabId = TAB_ORDER[newIdx];
+  const tabs = document.querySelectorAll('.tab');
+  let targetBtn = null;
+  tabs.forEach(t => {
+    const onclick = t.getAttribute('onclick') || '';
+    if (onclick.includes(`'${tabId}'`)) targetBtn = t;
+  });
+  if (targetBtn) showTab(tabId, targetBtn);
+}
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+function chip(el, grp) {
+  document.querySelectorAll(`#${grp} .chip`).forEach(c => c.classList.remove('on'));
+  el.classList.toggle('on', true);
+  // Ménopause chirurgicale
+  if (grp === 'c-meno-stat') {
+    document.getElementById('fg-meno-chir').style.display =
+      el.textContent === 'Ménopause chirurgicale' ? 'block' : 'none';
+  }
+}
+
+function yn(el) {
+  el.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function updateHeader() {
+  const p = document.getElementById('prenom').value;
+  const n = document.getElementById('nom').value;
+  const name = (p + ' ' + n).trim() || 'Nouvelle cliente';
+  document.getElementById('fh-name').textContent = name;
+  const dob = document.getElementById('ddn').value;
+  if (dob) {
+    const age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
+    document.getElementById('fh-meta').textContent = `${age} ans`;
+  }
+  // Auto-save dès que prénom ou nom est saisi
+  if (currentId && (p || n)) {
+    clients[currentId].data = clients[currentId].data || {};
+    clients[currentId].data.prenom = p;
+    clients[currentId].data.nom = n;
+    clients[currentId].updatedAt = new Date().toISOString();
+    saveToStorage();
+    renderClientList();
+  }
+}
+
+function syncAge() { syncPoidsToCalc(); }
+function syncField(srcId, dstId, transform) {
+  const src = document.getElementById(srcId);
+  const dst = document.getElementById(dstId);
+  if (src && dst) dst.value = transform ? transform(src.value) : src.value;
+  syncPoidsToCalc();
+}
+
+// ═══════════════════════════════════════
+// CALCULS POIDS
+// ═══════════════════════════════════════
+function calcPoids() {
+  const t = parseFloat(document.getElementById('c_taille').value) || 0;
+  const p = parseFloat(document.getElementById('c_poids').value) || 0;
+  const age = parseFloat(document.getElementById('c_age').value) || 0;
+  const waist = parseFloat(document.getElementById('c_waist').value) || 0;
+  const hanche = parseFloat(document.getElementById('c_hanche').value) || 0;
+  const cible = parseFloat(document.getElementById('c_cible').value) || p;
+  if (!t || !p || !age) { document.getElementById('poids-results').style.display = 'none'; return; }
+  const tM = t > 3 ? t / 100 : t;
+  const imc = p / (tM * tM);
+  const lorentz = (tM * 100) - 100 - ((tM * 100) - 150) / 4;
+  const tth = waist && hanche ? waist / hanche : null;
+  const mb = 9.74 * cible + 172.9 * tM - 4.737 * age + 667.051;
+  document.getElementById('poids-results').style.display = 'block';
+  document.getElementById('poids-vals').innerHTML = `
+    <div class="pv"><span>IMC</span><span>${imc.toFixed(1)}</span></div>
+    <div class="pv"><span>Poids Lorentz</span><span>${lorentz.toFixed(1)} kg</span></div>
+    ${tth ? `<div class="pv"><span>Taille / hanches</span><span class="${tth > 0.85 ? 'warn' : ''}">${tth.toFixed(2)}</span></div>` : ''}
+  `;
+  const IMC_MIN = 14, IMC_MAX = 45;
+  const pct = Math.min(Math.max((imc - IMC_MIN) / (IMC_MAX - IMC_MIN) * 100, 1), 99);
+  const cursor = document.getElementById('imc-cursor');
+  if (cursor) cursor.style.left = pct + '%';
+  const imcCats = [
+    {max:16.5, label:'Maigreur sévère'},{max:18.5, label:'Maigreur'},{max:25, label:'Poids normal ✓'},
+    {max:30, label:'Surpoids'},{max:35, label:'Obésité modérée'},{max:40, label:'Obésité sévère'},{max:99, label:'Obésité morbide'}
+  ];
+  const cat = imcCats.find(c => imc < c.max) || imcCats[imcCats.length-1];
+  const lbl = document.getElementById('imc-label');
+  if (lbl) lbl.textContent = `IMC ${imc.toFixed(1)} — ${cat.label}`;
+  document.getElementById('cal-vals').innerHTML = `
+    <div class="pv"><span>Métab. de base</span><span>${Math.round(mb)} kcal</span></div>
+    <div class="pv"><span>Sédentaire</span><span>${Math.round(mb * 1.2)} kcal</span></div>
+    <div class="pv"><span>1–3 séances/sem</span><span>${Math.round(mb * 1.375)} kcal</span></div>
+    <div class="pv"><span>3–5 séances/sem</span><span>${Math.round(mb * 1.55)} kcal</span></div>
+    <div class="pv"><span>6–7 séances/sem</span><span>${Math.round(mb * 1.725)} kcal</span></div>
+  `;
+}
+
+// ═══════════════════════════════════════
+// NEUROTRANSMETTEURS
+// ═══════════════════════════════════════
+function buildNeuro() {
+  const c = document.getElementById('neuro-container');
+  neuroData.forEach((blk, bi) => {
+    const d = document.createElement('div');
+    d.className = 'neuro-blk';
+    d.innerHTML = `
+      <div class="neuro-hdr">
+        <div class="neuro-name">${blk.name}</div>
+        <div class="neuro-score" id="ns-${bi}">0 / ${blk.items.length}</div>
+      </div>
+      <div class="neuro-items">
+        ${blk.items.map((it, ii) => `<div class="ni"><input type="checkbox" id="n${bi}_${ii}" onchange="updateNeuro(${bi},${blk.items.length})"><label for="n${bi}_${ii}">${it}</label></div>`).join('')}
+      </div>
+      <div class="neuro-reco">→ ${blk.reco}</div>`;
+    c.appendChild(d);
+  });
+}
+
+function updateNeuro(bi, total) {
+  const checks = document.querySelectorAll(`[id^="n${bi}_"]`);
+  const count = [...checks].filter(c => c.checked).length;
+  const el = document.getElementById(`ns-${bi}`);
+  el.textContent = `${count} / ${total}`;
+  el.className = 'neuro-score' + (count >= Math.ceil(total / 2) ? ' alert' : '');
+}
+
+// ═══════════════════════════════════════
+// SUIVI
+// ═══════════════════════════════════════
+function addSuiviRow(values) {
+  const tbody = document.getElementById('suivi-body');
+  const tr = document.createElement('tr');
+  const vals = values || ['', '', '', '', '', ''];
+  tr.innerHTML = `
+    <td><input type="date" value="${vals[0] || ''}"></td>
+    <td><textarea placeholder="Comment ça s'est passé…">${vals[1] || ''}</textarea></td>
+    <td><textarea placeholder="Points abordés…">${vals[2] || ''}</textarea></td>
+    <td><textarea placeholder="À faire pour la prochaine fois…">${vals[3] || ''}</textarea></td>
+    <td><textarea placeholder="Fiches, guides…">${vals[4] || ''}</textarea></td>
+    <td><textarea placeholder="Compléments, dosages…">${vals[5] || ''}</textarea></td>`;
+  tbody.appendChild(tr);
+}
+
+// ═══════════════════════════════════════
+// SYNTHÈSE
+// ═══════════════════════════════════════
+function buildSynthese() {
+  const d = readForm();
+  const v = (val) => val || '<span class="synth-empty">—</span>';
+  const vchip = (val) => val || '<span class="synth-empty">Non renseigné</span>';
+
+  const age = d.ddn ? Math.floor((new Date() - new Date(d.ddn)) / (365.25*24*3600*1000)) + ' ans' : '—';
+  const ddn = d.ddn ? new Date(d.ddn).toLocaleDateString('fr-FR') : '—';
+
+  // Neuros cochés
+  const neuroLines = neuroData.map((blk, bi) => {
+    const items = blk.items.filter((_, ii) => d[`n${bi}_${ii}`]);
+    if (!items.length) return null;
+    return `<div class="synth-row"><span class="synth-label">${blk.name} (${items.length}/${blk.items.length})</span><span class="synth-val">${items.join(', ')}</span></div>`;
+  }).filter(Boolean).join('');
+
+  // Suivi avec titres de colonnes
+  const SUIVI_COLS = ['Date', 'Bilan de la période', 'Ce que j\'ai expliqué', 'Recommandations', 'Outils envoyés', 'Complémentation'];
+  const suiviRows = [];
+  document.querySelectorAll('#suivi-body tr').forEach(tr => {
+    const cells = [...tr.querySelectorAll('input,textarea')].map(el => el.value.trim());
+    if (cells.some(Boolean)) {
+      const parts = [];
+      cells.forEach((c, i) => { if (c && i > 0) parts.push(`<strong>${SUIVI_COLS[i]} :</strong> ${c}`); });
+      suiviRows.push(`<div class="synth-row"><span class="synth-label">${cells[0]||'—'}</span><span class="synth-val" style="flex-direction:column;display:flex;gap:3px">${parts.join('<br>')}</span></div>`);
+    }
+  });
+
+  let html = `
+    <div class="synth-section">
+      <div class="synth-section-title">👤 Identité</div>
+      <div class="synth-row"><span class="synth-label">Nom complet</span><span class="synth-val">${v((d.prenom+' '+d.nom).trim())}</span></div>
+      <div class="synth-row"><span class="synth-label">Date de naissance</span><span class="synth-val">${ddn} (${age})</span></div>
+      <div class="synth-row"><span class="synth-label">Profession</span><span class="synth-val">${v(d.profession)}</span></div>
+      <div class="synth-row"><span class="synth-label">Suivi</span><span class="synth-val">${vchip(d['c-suivi'])}</span></div>
+      <div class="synth-row"><span class="synth-label">Email</span><span class="synth-val">${v(d.email)}</span></div>
+      <div class="synth-row"><span class="synth-label">Téléphone</span><span class="synth-val">${v(d.tel)}</span></div>
+      <div class="synth-row"><span class="synth-label">Médecin traitant</span><span class="synth-val">${v(d.medecin)}</span></div>
+      ${d.resume_rdv ? `<div class="synth-row"><span class="synth-label">Résumé RDV découverte</span><span class="synth-val">${d.resume_rdv}</span></div>` : ''}
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🎯 Objectifs</div>
+      <div class="synth-row"><span class="synth-label">Objectif 1 (principal)</span><span class="synth-val">${v(d.obj1)}</span></div>
+      ${d.obj2 ? `<div class="synth-row"><span class="synth-label">Objectif 2</span><span class="synth-val">${d.obj2}</span></div>` : ''}
+      ${d.obj3 ? `<div class="synth-row"><span class="synth-label">Objectif 3</span><span class="synth-val">${d.obj3}</span></div>` : ''}
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🩺 Médical</div>
+      <div class="synth-row"><span class="synth-label">Statut ménopause</span><span class="synth-val">${vchip(d['c-meno-stat'])}${d['c-meno-stat']==='Ménopause chirurgicale' && d.meno_chir_age ? ' — '+d.meno_chir_age : ''}</span></div>
+      <div class="synth-row"><span class="synth-label">Taille / Poids</span><span class="synth-val">${v(d.taille)} cm — ${v(d.poids)} kg</span></div>
+      <div class="synth-row"><span class="synth-label">Tabac</span><span class="synth-val">${vchip(d['c-tabac'])}</span></div>
+      <div class="synth-row"><span class="synth-label">Maladies actuelles</span><span class="synth-val">${v(d.mal_act)}</span></div>
+      <div class="synth-row"><span class="synth-label">Antécédents familiaux</span><span class="synth-val">${v(d.antecedents)}</span></div>
+      <div class="synth-row"><span class="synth-label">Traitements en cours</span><span class="synth-val">${v(d.traitements)}</span></div>
+      <div class="synth-row"><span class="synth-label">Compléments actuels</span><span class="synth-val">${v(d.complements)}</span></div>
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🩸 Bilan sanguin</div>
+      ${[['TSH',d.tsh],['Fer',d.fer],['CRP us',d.crp],['HOMA',d.homa],['Cholestérol',d.chol],['B12',d.b12],['Calcémie',d.calcemie],['Cortisol',d.cortisol]].filter(([,v])=>v).map(([k,val])=>`<div class="synth-row"><span class="synth-label">${k}</span><span class="synth-val">${val}</span></div>`).join('') || '<span class="synth-empty">Non renseigné</span>'}
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🧠 Scores mentaux & énergie</div>
+      ${[['Stress',d.sc_stress],['Anxiété',d.sc_anxiete],['Fatigue',d.sc_fatigue],['Déprime',d.sc_deprime],['Irritabilité',d.sc_irrit],['Motivation',d.sc_motiv],['Concentration',d.sc_concent],['Mémoire',d.sc_memoire]].filter(([,v])=>v).map(([k,val])=>`<div class="synth-row"><span class="synth-label">${k}</span><span class="synth-val">${val}/10</span></div>`).join('') || '<span class="synth-empty">Non renseigné</span>'}
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🌙 Sommeil</div>
+      <div class="synth-row"><span class="synth-label">Qualité</span><span class="synth-val">${d.sc_sommeil ? d.sc_sommeil+'/10' : '—'}</span></div>
+      <div class="synth-row"><span class="synth-label">Coucher / Lever</span><span class="synth-val">${v(d.coucher)} → ${v(d.lever)}</span></div>
+      <div class="synth-row"><span class="synth-label">Durée effective</span><span class="synth-val">${v(d.duree_sommeil)}</span></div>
+      <div class="synth-row"><span class="synth-label">Réveils</span><span class="synth-val">${v(d.reveils)}</span></div>
+      <div class="synth-row"><span class="synth-label">Cause des réveils</span><span class="synth-val">${v(d.cause_reveil)}</span></div>
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🥗 Alimentation</div>
+      <div class="synth-row"><span class="synth-label">Régime</span><span class="synth-val">${v(d.regime)}</span></div>
+      <div class="synth-row"><span class="synth-label">Intolérances / Allergies</span><span class="synth-val">${v(d.intolerances)} / ${v(d.allergies)}</span></div>
+      <div class="synth-row"><span class="synth-label">Alcool</span><span class="synth-val">${vchip(d['c-alcool'])}</span></div>
+      <div class="synth-row"><span class="synth-label">Envies de sucre</span><span class="synth-val">${vchip(d['c-sucre'])}</span></div>
+      <div class="synth-row"><span class="synth-label">Ballonnements</span><span class="synth-val">${v(d.ballon)}</span></div>
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">🏃 Sport</div>
+      <div class="synth-row"><span class="synth-label">Sédentarité</span><span class="synth-val">${vchip(d['c-sedent'])}</span></div>
+      ${d.sport_notes ? `<div class="synth-row"><span class="synth-label">Notes</span><span class="synth-val">${d.sport_notes}</span></div>` : ''}
+    </div>
+
+    <div class="synth-section">
+      <div class="synth-section-title">〰 Ménopause</div>
+      <div class="synth-row"><span class="synth-label">Libido</span><span class="synth-val">${vchip(d['c-libido'])}</span></div>
+      ${d.bdc_freq ? `<div class="synth-row"><span class="synth-label">Bouffées — fréquence</span><span class="synth-val">${d.bdc_freq}</span></div>` : ''}
+      ${d.meno_autres ? `<div class="synth-row"><span class="synth-label">Autres</span><span class="synth-val">${d.meno_autres}</span></div>` : ''}
+    </div>
+
+    ${neuroLines ? `<div class="synth-section"><div class="synth-section-title">⚡ Neuro cochés</div>${neuroLines}</div>` : ''}
+
+    ${(d.note_medical||d.note_alim_hab||d.note_digestion||d.note_alim_emot||d.note_mental||d.note_sommeil) ? `
+    <div class="synth-section">
+      <div class="synth-section-title">📝 Notes libres</div>
+      ${d.note_medical ? `<div class="synth-row"><span class="synth-label">Médical</span><span class="synth-val">${d.note_medical}</span></div>` : ''}
+      ${d.note_alim_hab ? `<div class="synth-row"><span class="synth-label">Alimentation — habitudes</span><span class="synth-val">${d.note_alim_hab}</span></div>` : ''}
+      ${d.note_digestion ? `<div class="synth-row"><span class="synth-label">Digestion</span><span class="synth-val">${d.note_digestion}</span></div>` : ''}
+      ${d.note_alim_emot ? `<div class="synth-row"><span class="synth-label">Alimentation émotionnelle</span><span class="synth-val">${d.note_alim_emot}</span></div>` : ''}
+      ${d.note_mental ? `<div class="synth-row"><span class="synth-label">Mental & stress</span><span class="synth-val">${d.note_mental}</span></div>` : ''}
+      ${d.note_sommeil ? `<div class="synth-row"><span class="synth-label">Sommeil</span><span class="synth-val">${d.note_sommeil}</span></div>` : ''}
+    </div>` : ''}
+
+    ${suiviRows.length ? `<div class="synth-section"><div class="synth-section-title">📅 Suivi (aperçu)</div>${suiviRows.join('')}</div>` : ''}
+  `;
+
+  document.getElementById('synth-content').innerHTML = html;
+}
+
+// ═══════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════
+function exportClient() {
+  if (!currentId) return;
+  // Sauvegarde automatique avant export
+  clients[currentId].data = readForm();
+  clients[currentId].updatedAt = new Date().toISOString();
+  saveToStorage();
+  const d = clients[currentId].data;
+  const p = d.prenom || 'Nouvelle';
+  const n = d.nom || 'Cliente';
+  const data = { client: clients[currentId], exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `MenoBase_${p}_${n}.json`;
+  a.click();
+}
+
+function exportBase() {
+  // Sauvegarde de la fiche en cours avant export global
+  if (currentId) {
+    clients[currentId].data = readForm();
+    clients[currentId].updatedAt = new Date().toISOString();
+    saveToStorage();
+  }
+  const data = { clients, exportedAt: new Date().toISOString(), version: 6 };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'menobase_backup.json';
+  a.click();
+}
+
+function importBase(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let imported = null;
+      if (data && data.clients && typeof data.clients === 'object' && !Array.isArray(data.clients)) {
+        imported = data.clients;
+      } else if (data && data.client && data.client.id) {
+        imported = { [data.client.id]: data.client };
+      } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+        imported = data;
+      }
+      if (imported && Object.keys(imported).length > 0) {
+        clients = { ...clients, ...imported };
+        saveToStorage();
+        renderClientList();
+        const count = Object.keys(imported).length;
+        alert('Import réussi ! ' + count + ' cliente' + (count > 1 ? 's' : '') + ' importée' + (count > 1 ? 's' : '') + '.');
+      } else {
+        alert('Le fichier semble vide ou ne contient aucune cliente.');
+      }
+    } catch(err) {
+      alert('Erreur de lecture : ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════
+// AUTOSAVE toutes les 60s
+// ═══════════════════════════════════════
+setInterval(() => { if (currentId) saveClient(); }, 60000);
+
+// SAUVEGARDE À LA FERMETURE
+window.addEventListener('beforeunload', () => {
+  if (currentId) {
+    clients[currentId].data = readForm();
+    clients[currentId].updatedAt = new Date().toISOString();
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+});
+
+// ═══════════════════════════════════════
+// SIDEBAR TOGGLE
+// ═══════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('collapsed');
+}
+
+function resetStorage() {
+  if (confirm('Cela va effacer toutes les donnees locales.\n\nExportez votre base avant de continuer.\n\nContinuer ?')) {
+    localStorage.clear();
+    clients = {}; currentId = null; settings = { name: '', palette: '' }; ressources = {};
+    renderClientList();
+    document.getElementById('welcome').style.display = 'flex';
+    document.getElementById('form-area').style.display = 'none';
+    closeSettings();
+    initAuth();
+  }
+}
+
+// ═══════════════════════════════════════
+// PAIEMENTS PAR CLIENTE
+// ═══════════════════════════════════════
+const MOYENS = ['Virement','Espèces','Stripe','Carte bleue','Chèque'];
+
+function addPaieRow(data) {
+  const tbody = document.getElementById('paie-body');
+  const tr = document.createElement('tr');
+  const d = data || {};
+  const moyensBtns = MOYENS.map(m =>
+    `<button class="moyen-btn${d.moyen===m?' on':''}" onclick="toggleMoyen(this)">${m}</button>`
+  ).join('');
+  tr.innerHTML = `
+    <td><input type="date" value="${d.date||''}"></td>
+    <td><input type="number" step="0.01" placeholder="0.00" data-role="montant" value="${d.montant||''}" oninput="calcPaieTotal()"></td>
+    <td><div class="moyen-btns">${moyensBtns}</div></td>
+    <td><input type="text" placeholder="Note optionnelle…" data-role="notes" value="${d.notes||''}"></td>
+    <td><button class="btn-del-row" onclick="delPaieRow(this)" title="Supprimer">×</button></td>`;
+  tbody.appendChild(tr);
+  calcPaieTotal();
+}
+
+function toggleMoyen(btn) {
+  btn.closest('.moyen-btns').querySelectorAll('.moyen-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function delPaieRow(btn) {
+  btn.closest('tr').remove();
+  calcPaieTotal();
+}
+
+function calcPaieTotal() {
+  let total = 0;
+  document.querySelectorAll('#paie-body input[data-role=montant]').forEach(el => {
+    total += parseFloat(el.value) || 0;
+  });
+  const el = document.getElementById('paie-total');
+  if (el) el.textContent = total.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+}
+
+// ═══════════════════════════════════════
+// RESSOURCES
+// ═══════════════════════════════════════
+const THEMES = [
+  {id:'menopause', label:'🌸 Ménopause'},
+  {id:'alimentation', label:'🥗 Alimentation'},
+  {id:'sommeil', label:'🌙 Sommeil'},
+  {id:'stress', label:'🧘 Stress'},
+  {id:'activite', label:'🏃 Activité physique'},
+  {id:'complementation', label:'💊 Complémentation'},
+  {id:'autre', label:'📁 Autre'}
+];
+const RESSOURCES_KEY = 'menobase_ressources_v1';
+let ressources = {};
+
+function loadRessources() {
+  const saved = localStorage.getItem(RESSOURCES_KEY);
+  if (saved) ressources = JSON.parse(saved);
+  else { ressources = {}; THEMES.forEach(t => { ressources[t.id] = []; }); }
+  THEMES.forEach(t => { if (!ressources[t.id]) ressources[t.id] = []; });
+}
+
+function saveRessources() {
+  localStorage.setItem(RESSOURCES_KEY, JSON.stringify(ressources));
+}
+
+function showRessources() {
+  if (currentId) { clients[currentId].data = readForm(); clients[currentId].updatedAt = new Date().toISOString(); saveToStorage(); renderClientList(); }
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('ressources-area').style.display = 'block';
+  document.getElementById('global-paie-area').style.display = 'none';
+  document.querySelectorAll('.btn-special').forEach(b => b.classList.remove('active-view'));
+  document.getElementById('btn-ressources').classList.add('active-view');
+  currentId = null;
+  document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+  buildRessourcesPage();
+}
+
+function buildRessourcesPage() {
+  const container = document.getElementById('ressources-content');
+  container.innerHTML = THEMES.map(theme => {
+    const items = ressources[theme.id] || [];
+    return `
+      <div class="theme-block" id="tb-${theme.id}">
+        <div class="theme-header" onclick="toggleTheme('${theme.id}')">
+          <span class="theme-name">${theme.label} <span class="theme-count">${items.length} ressource${items.length!==1?'s':''}</span></span>
+          <span class="theme-toggle open" id="tt-${theme.id}">▼</span>
+        </div>
+        <div class="theme-body" id="tbody-${theme.id}">
+          ${items.length ? items.map((item,i) => buildRessourceItem(theme.id, item, i)).join('') : '<div style="padding:12px 14px;color:var(--text3);font-size:13px;font-style:italic">Aucune ressource pour l\'instant.</div>'}
+          <div style="display:flex;gap:8px;padding:9px 14px;border-top:0.5px solid var(--border)">
+            <button class="btn-show-add" style="flex:1;border-top:none;padding:8px 10px;justify-content:center" onclick="addRessourceFile('${theme.id}')">📂 Ajouter un fichier</button>
+            <button class="btn-show-add" style="flex:1;border-top:none;padding:8px 10px;justify-content:center" onclick="addRessourceUrl('${theme.id}')">🔗 Ajouter un lien URL</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function buildRessourceItem(themeId, item, index) {
+  const isFile = item.hasFile || item.fileName;
+  const icon = isFile ? '📄' : '🔗';
+  const label = isFile ? (item.fileName || 'Fichier') : (item.url || 'Lien');
+  return `
+    <div class="ressource-item">
+      <span class="ri-icon">${icon}</span>
+      <span class="ri-name">${item.name}</span>
+      <span class="ri-type" style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${label}</span>
+      <button class="btn-open-res" onclick="openRessource('${themeId}',${index})">▶ Ouvrir</button>
+      <button class="btn-del-res" onclick="deleteRessource('${themeId}',${index})" title="Supprimer">×</button>
+    </div>`;
+}
+
+function toggleTheme(id) {
+  const body = document.getElementById('tbody-' + id);
+  const toggle = document.getElementById('tt-' + id);
+  const isOpen = toggle.classList.contains('open');
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.classList.toggle('open', !isOpen);
+}
+
+const resHandles = {};
+
+async function addRessourceFile(themeId) {
+  if (!ressources[themeId]) ressources[themeId] = [];
+  if (FSA_SUPPORTED) {
+    try {
+      const [handle] = await window.showOpenFilePicker({ multiple: false });
+      const file = await handle.getFile();
+      const idx = ressources[themeId].length;
+      ressources[themeId].push({ name: file.name, fileName: file.name, hasFile: true });
+      resHandles[themeId + '_' + idx] = handle;
+      saveRessources();
+      buildRessourcesPage();
+    } catch(e) { if (e.name !== 'AbortError') alert('Impossible d\'accéder au fichier.'); }
+  } else {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = ev => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      ressources[themeId].push({ name: file.name, fileName: file.name });
+      saveRessources();
+      buildRessourcesPage();
+    };
+    input.click();
+  }
+}
+
+function addRessourceUrl(themeId) {
+  const url = prompt('Entrez l\'URL de la ressource :');
+  if (!url || !url.trim()) return;
+  const name = prompt('Nom de la ressource :', url.trim()) || url.trim();
+  if (!ressources[themeId]) ressources[themeId] = [];
+  ressources[themeId].push({ name: name.trim(), url: url.trim() });
+  saveRessources();
+  buildRessourcesPage();
+}
+
+function deleteRessource(themeId, index) {
+  ressources[themeId].splice(index, 1);
+  saveRessources();
+  buildRessourcesPage();
+}
+
+async function openRessource(themeId, index) {
+  const item = ressources[themeId][index];
+  if (!item) return;
+  if (item.url) { window.open(item.url, '_blank'); return; }
+  if (item.path) { window.open(item.path, '_blank'); return; }
+  if (FSA_SUPPORTED && (item.hasFile || item.fileName)) {
+    let handle = resHandles[themeId + '_' + index];
+    if (!handle) {
+      try { const [h] = await window.showOpenFilePicker({ multiple: false }); handle = h; resHandles[themeId + '_' + index] = h; }
+      catch(e) { if (e.name !== 'AbortError') alert('Veuillez reselectionner le fichier.'); return; }
+    }
+    try {
+      const file = await handle.getFile();
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch(e) { delete resHandles[themeId + '_' + index]; alert('Lien expire. Cliquez a nouveau.'); }
+    return;
+  }
+}
+
+// ═══════════════════════════════════════
+// VUE GLOBALE PAIEMENTS
+// ═══════════════════════════════════════
+let gpFilter = 'mois';
+
+function showGlobalPaiements() {
+  if (currentId) { clients[currentId].data = readForm(); clients[currentId].updatedAt = new Date().toISOString(); saveToStorage(); renderClientList(); }
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('ressources-area').style.display = 'none';
+  document.getElementById('global-paie-area').style.display = 'block';
+  document.querySelectorAll('.btn-special').forEach(b => b.classList.remove('active-view'));
+  document.getElementById('btn-global-paie').classList.add('active-view');
+  currentId = null;
+  document.querySelectorAll('.client-item').forEach(el => el.classList.remove('active'));
+  renderGlobalPaiements();
+}
+
+function setGpFilter(filter, btn) {
+  gpFilter = filter;
+  document.querySelectorAll('.gp-filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('gp-custom-dates').style.display = filter === 'custom' ? 'flex' : 'none';
+  renderGlobalPaiements();
+}
+
+function getFilterDates() {
+  const now = new Date();
+  if (gpFilter === 'mois') {
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    return { from, to };
+  }
+  if (gpFilter === 'trimestre') {
+    const q = Math.floor(now.getMonth() / 3);
+    const from = new Date(now.getFullYear(), q*3, 1);
+    const to = new Date(now.getFullYear(), q*3+3, 0);
+    return { from, to };
+  }
+  if (gpFilter === 'annee') {
+    return { from: new Date(now.getFullYear(), 0, 1), to: new Date(now.getFullYear(), 11, 31) };
+  }
+  if (gpFilter === 'custom') {
+    const f = document.getElementById('gp-date-from').value;
+    const t = document.getElementById('gp-date-to').value;
+    return {
+      from: f ? new Date(f) : null,
+      to: t ? new Date(t) : null
+    };
+  }
+  return { from: null, to: null }; // tout
+}
+
+function renderGlobalPaiements() {
+  const { from, to } = getFilterDates();
+  const allRows = [];
+  Object.values(clients).forEach(client => {
+    const d = client.data || {};
+    const name = ((d.prenom||'') + ' ' + (d.nom||'')).trim() || 'Sans nom';
+    const paiements = d.paiements || [];
+    paiements.forEach(p => {
+      if (!p.montant) return;
+      const montant = parseFloat(p.montant) || 0;
+      let include = true;
+      if (p.date) {
+        const dt = new Date(p.date);
+        if (from && dt < from) include = false;
+        if (to && dt > to) include = false;
+      } else if (from || to) {
+        include = false; // pas de date = exclus si filtre actif
+      }
+      if (include) allRows.push({ date: p.date, client: name, montant, moyen: p.moyen||'—', notes: p.notes||'' });
+    });
+  });
+  // Tri par date décroissante
+  allRows.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  // Stats
+  const total = allRows.reduce((s,r) => s+r.montant, 0);
+  const nbClientes = new Set(allRows.map(r=>r.client)).size;
+  // Labels filtres
+  const filterLabels = { mois:'Ce mois', trimestre:'Ce trimestre', annee:'Cette année', tout:'Total général', custom:'Période personnalisée' };
+  document.getElementById('gp-stats').innerHTML = `
+    <div class="gp-stat"><div class="gp-stat-label">Total encaissé</div><div class="gp-stat-val">${total.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div><div class="gp-stat-sub">${filterLabels[gpFilter]||''}</div></div>
+    <div class="gp-stat"><div class="gp-stat-label">Nombre de paiements</div><div class="gp-stat-val">${allRows.length}</div></div>
+    <div class="gp-stat"><div class="gp-stat-label">Clientes actives</div><div class="gp-stat-val">${nbClientes}</div></div>
+  `;
+  const tbody = document.getElementById('gp-tbody');
+  if (!allRows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px;font-style:italic">Aucun paiement sur cette période.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allRows.map(r => `
+    <tr>
+      <td>${r.date ? new Date(r.date).toLocaleDateString('fr-FR') : '—'}</td>
+      <td>${r.client}</td>
+      <td class="gp-amount">${r.montant.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td>
+      <td>${r.moyen !== '—' ? `<span class="gp-badge">${r.moyen}</span>` : '—'}</td>
+      <td style="color:var(--text3)">${r.notes}</td>
+    </tr>`).join('');
+}
+
+function exportPaiementsCSV() {
+  const { from, to } = getFilterDates();
+  const rows = [['Date','Cliente','Montant (€)','Moyen de paiement','Notes']];
+  Object.values(clients).forEach(client => {
+    const d = client.data || {};
+    const name = ((d.prenom||'') + ' ' + (d.nom||'')).trim() || 'Sans nom';
+    (d.paiements||[]).forEach(p => {
+      if (!p.montant) return;
+      let include = true;
+      if (p.date) {
+        const dt = new Date(p.date);
+        if (from && dt < from) include = false;
+        if (to && dt > to) include = false;
+      } else if (from || to) { include = false; }
+      if (include) rows.push([p.date||'', name, p.montant, p.moyen||'', p.notes||'']);
+    });
+  });
+  rows.sort((a,b) => (b[0]||'').localeCompare(a[0]||''));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `MenoBase_paiements_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════
+// OBJECTIFS DYNAMIQUES (Évolution 8)
+// ═══════════════════════════════════════
+let objCount = 3;
+
+function addObjectif() {
+  objCount++;
+  const container = document.getElementById('objectifs-container');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'fg';
+  div.innerHTML = `<div class="fl">Objectif ${objCount}</div><input class="fi" id="obj${objCount}">`;
+  container.appendChild(div);
+}
+
+function readObjsExtra() {
+  const extras = [];
+  let i = 4;
+  while (document.getElementById('obj' + i)) {
+    extras.push({ n: i, val: document.getElementById('obj' + i).value });
+    i++;
+  }
+  return extras;
+}
+
+function fillObjsExtra(extras) {
+  if (!extras || !extras.length) return;
+  const container = document.getElementById('objectifs-container');
+  if (!container) return;
+  extras.forEach(ex => {
+    if (ex.n <= 3) return;
+    let el = document.getElementById('obj' + ex.n);
+    if (!el) {
+      const div = document.createElement('div');
+      div.className = 'fg';
+      div.innerHTML = `<div class="fl">Objectif ${ex.n}</div><input class="fi" id="obj${ex.n}">`;
+      container.appendChild(div);
+      el = document.getElementById('obj' + ex.n);
+      if (ex.n > objCount) objCount = ex.n;
+    }
+    if (el) el.value = ex.val;
+  });
+}
+
+// ═══════════════════════════════════════
+// BILAN SANGUIN AVEC HISTORIQUE (Évolution 6)
+// ═══════════════════════════════════════
+const MARQUEURS = [
+  { id: 'chol', label: 'Cholestérol' },
+  { id: 'fer', label: 'Fer' },
+  { id: 'homa', label: 'HOMA' },
+  { id: 'crp', label: 'CRP us' },
+  { id: 'tsh', label: 'TSH' },
+  { id: 'b12', label: 'B12' },
+  { id: 'calcemie', label: 'Calcémie' },
+  { id: 'homocyst', label: 'Homocystéine' },
+  { id: 'alat', label: 'ALAT' },
+  { id: 'cortisol', label: 'Cortisol' },
+];
+
+function buildBilans(bilanData) {
+  const container = document.getElementById('bilan-container');
+  if (!container) return;
+  container.innerHTML = '';
+  // Marqueurs standards
+  MARQUEURS.forEach(m => {
+    const entries = (bilanData[m.id] || [{ date: '', val: '' }]);
+    container.appendChild(buildBilanBlock(m.id, m.label, entries, false));
+  });
+  // Autres analyses
+  const autresEntries = bilanData['autres'] || [{ nom: '', val: '' }];
+  const autresDiv = document.createElement('div');
+  autresDiv.style.marginTop = '16px';
+  autresDiv.innerHTML = `<div class="fl" style="margin-bottom:9px">Autres analyses</div><div id="autres-bilans"></div><button class="btn-add-row" onclick="addAutreBilan()" style="margin-top:4px">＋ Autre analyse</button>`;
+  container.appendChild(autresDiv);
+  const autresContainer = autresDiv.querySelector('#autres-bilans');
+  autresEntries.forEach(e => addAutreBilanRow(e));
+}
+
+function buildBilanBlock(id, label, entries, focus) {
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-bottom:12px;border:0.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--surface2);border-bottom:0.5px solid var(--border)">
+      <div class="fl" style="margin:0">${label}</div>
+      <button class="btn-add-row" onclick="addBilanEntry('${id}')" style="padding:0;font-size:12px;margin:0">＋ Entrée</button>
+    </div>
+    <div id="bilan-entries-${id}" style="padding:6px 12px"></div>`;
+  div.querySelector(`#bilan-entries-${id}`) && entries.forEach(e => {
+    // handled below
+  });
+  setTimeout(() => {
+    const container = document.getElementById(`bilan-entries-${id}`);
+    if (container) {
+      container.innerHTML = '';
+      entries.forEach(e => addBilanEntryRow(id, e, container));
+    }
+  }, 0);
+  return div;
+}
+
+function addBilanEntry(id) {
+  const container = document.getElementById(`bilan-entries-${id}`);
+  if (container) addBilanEntryRow(id, { date: '', val: '' }, container);
+}
+
+function addBilanEntryRow(id, entry, container) {
+  const row = document.createElement('div');
+  row.className = 'evo-entry';
+  row.style.cssText = 'display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);';
+  row.innerHTML = `
+    <input type="date" class="fi" style="padding:5px 8px;font-size:13px" value="${entry.date||''}">
+    <input type="text" class="fi evo-val-input" placeholder="Résultat / taux" value="${entry.val||''}">
+    <button class="btn-del-doc" onclick="this.closest('.evo-entry, div').remove()" title="Supprimer">×</button>`;
+  if (!container) container = document.getElementById(`bilan-entries-${id}`);
+  if (container) container.appendChild(row);
+}
+
+function addAutreBilan() {
+  addAutreBilanRow({ nom: '', val: '' });
+}
+
+function addAutreBilanRow(entry) {
+  const container = document.getElementById('autres-bilans');
+  if (!container) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:6px;';
+  row.innerHTML = `
+    <input class="fi" placeholder="Nom de l'analyse" value="${entry.nom||''}">
+    <input class="fi" placeholder="Résultat / taux" value="${entry.val||''}">
+    <button class="btn-del-doc" onclick="this.parentElement.remove()" title="Supprimer">×</button>`;
+  container.appendChild(row);
+}
+
+function readBilans() {
+  const data = {};
+  MARQUEURS.forEach(m => {
+    const container = document.getElementById(`bilan-entries-${m.id}`);
+    if (!container) return;
+    const entries = [];
+    container.querySelectorAll('.evo-entry, div[style*="grid"]').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 2) entries.push({ date: inputs[0].value, val: inputs[1].value });
+    });
+    // fallback: chercher les rows par structure
+    const rows = container.children;
+    if (!entries.length) {
+      Array.from(rows).forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        if (inputs.length >= 2) entries.push({ date: inputs[0].value, val: inputs[1].value });
+      });
+    }
+    data[m.id] = entries.length ? entries : [{ date: '', val: '' }];
+  });
+  // Autres bilans
+  const autresContainer = document.getElementById('autres-bilans');
+  if (autresContainer) {
+    const autres = [];
+    autresContainer.children && Array.from(autresContainer.children).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 2) autres.push({ nom: inputs[0].value, val: inputs[1].value });
+    });
+    data['autres'] = autres;
+  }
+  return data;
+}
+
+// ═══════════════════════════════════════
+// DOCUMENTS PAR CLIENTE (Évolution 1)
+// ═══════════════════════════════════════
+let clientDocs = [];
+
+function fillDocuments(docs) {
+  clientDocs = docs || [];
+  renderDocsList();
+}
+
+function readDocuments() {
+  document.querySelectorAll('#docs-list .doc-item').forEach((item, i) => {
+    if (!clientDocs[i]) return;
+    const nameEl = item.querySelector('.doc-name-input');
+    const pathEl = item.querySelector('.doc-path-input');
+    if (nameEl) clientDocs[i].name = nameEl.value;
+    if (pathEl && clientDocs[i].type === 'url') clientDocs[i].path = pathEl.value;
+  });
+  return clientDocs.map(doc => ({
+    name: doc.name || '', path: doc.path || '', type: doc.type || 'file',
+    fileName: doc.fileName || '', hasFile: doc.hasFile || false
+  }));
+}
+
+function renderDocsList() {
+  const container = document.getElementById('docs-list');
+  if (!container) return;
+  if (!clientDocs.length) {
+    container.innerHTML = '<div style="color:var(--text3);font-size:13px;font-style:italic;padding:8px 0">Aucun document ajouté.</div>';
+    return;
+  }
+  container.innerHTML = clientDocs.map((doc, i) => {
+    const isUrl = doc.type === 'url';
+    const icon = isUrl ? '🔗' : '📄';
+    const displayName = doc.fileName || doc.name || '';
+    const btnLabel = isUrl ? '▶ Ouvrir' : '▶ Ouvrir';
+    return `<div class="doc-item" data-index="${i}" data-type="${doc.type}">
+      <span class="doc-icon">${icon}</span>
+      <input class="doc-name-input" placeholder="Nom du document" value="${(doc.name||displayName).replace(/"/g,'&quot;')}" onblur="autoSaveDocs()">
+      ${isUrl
+        ? `<input class="doc-path-input" placeholder="https://..." value="${(doc.path||'').replace(/"/g,'&quot;')}" onblur="autoSaveDocs()">`
+        : `<span style="flex:2;font-size:12px;color:var(--text3);padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${displayName || 'Fichier non sélectionné'}</span>`
+      }
+      <button class="btn-open-doc" onclick="openDoc(${i})">${btnLabel}</button>
+      <button class="btn-del-doc" onclick="delDoc(${i})" title="Supprimer">×</button>
+    </div>`;
+  }).join('');
+}
+
+const FSA_SUPPORTED = ('showOpenFilePicker' in window);
+const docFileHandles = {};
+
+function autoSaveDocs() {
+  if (!currentId || !clients[currentId]) return;
+  if (!clients[currentId].data) clients[currentId].data = {};
+  clients[currentId].data.documents = readDocuments();
+  clients[currentId].updatedAt = new Date().toISOString();
+  saveToStorage();
+}
+
+async function addDocFile() {
+  if (FSA_SUPPORTED) {
+    try {
+      const [handle] = await window.showOpenFilePicker({ multiple: false });
+      const file = await handle.getFile();
+      const idx = clientDocs.length;
+      clientDocs.push({ name: file.name, type: 'file', fileName: file.name, hasFile: true });
+      docFileHandles[idx] = handle;
+      renderDocsList();
+      autoSaveDocs();
+    } catch(e) {
+      if (e.name !== 'AbortError') alert('Impossible d acceder au fichier.');
+    }
+  } else {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = ev => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      clientDocs.push({ name: file.name, type: 'file', fileName: file.name });
+      renderDocsList();
+      autoSaveDocs();
+    };
+    input.click();
+  }
+}
+
+function addDocUrl() {
+  clientDocs.push({ name: '', path: '', type: 'url' });
+  renderDocsList();
+  setTimeout(() => { document.querySelectorAll('#docs-list .doc-name-input, #docs-list .doc-path-input').forEach(el => el.addEventListener('blur', autoSaveDocs)); }, 100);
+}
+
+function delDoc(i) {
+  clientDocs.splice(i, 1);
+  delete docFileHandles[i];
+  renderDocsList();
+  autoSaveDocs();
+}
+
+async function openDoc(i) {
+  const items = document.querySelectorAll('#docs-list .doc-item');
+  if (items[i]) {
+    const nameEl = items[i].querySelector('.doc-name-input');
+    const pathEl = items[i].querySelector('.doc-path-input');
+    if (nameEl) clientDocs[i].name = nameEl.value;
+    if (pathEl && clientDocs[i].type === 'url') clientDocs[i].path = pathEl.value;
+  }
+  const doc = clientDocs[i];
+  if (!doc) return;
+  if (doc.type === 'url') {
+    if (doc.path) window.open(doc.path, '_blank');
+    return;
+  }
+  if (FSA_SUPPORTED) {
+    let handle = docFileHandles[i];
+    if (!handle) {
+      try {
+        const [h] = await window.showOpenFilePicker({ multiple: false });
+        handle = h; docFileHandles[i] = h;
+        const file = await h.getFile();
+        clientDocs[i].fileName = file.name;
+        clientDocs[i].name = clientDocs[i].name || file.name;
+        renderDocsList(); autoSaveDocs();
+      } catch(e) { if (e.name !== 'AbortError') alert('Veuillez reselectionner le fichier.'); return; }
+    }
+    try {
+      const file = await handle.getFile();
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch(e) { delete docFileHandles[i]; alert('Lien expire. Cliquez a nouveau.'); }
+  }
+}
+
+// ═══════════════════════════════════════
+// ÉVOLUTION LONGITUDINALE (Évolution 10)
+// ═══════════════════════════════════════
+// Sections simples (texte/nombre)
+const EVO_SECTIONS = [
+  { id: 'poids',    label: '⚖ Poids (kg)',              srcField: 'poids',        placeholder: 'Ex : 65' },
+  { id: 'ballon',   label: '💨 Ballonnements',            srcField: 'ballon',       placeholder: 'Ex : quotidiens le soir' },
+  { id: 'selles',   label: '🔄 Fréquence des selles',    srcField: 'selles',       placeholder: 'Ex : 1x/jour' },
+  { id: 'sommeil',  label: '🌙 Durée du sommeil',         srcField: 'duree_sommeil',placeholder: 'Ex : 7h' },
+  { id: 'bdc',      label: '🔥 Bouffées de chaleur',     srcField: 'bdc_freq',     placeholder: 'Ex : 3/jour' },
+  { id: 'sueurs',   label: '💦 Sueurs nocturnes',         srcField: 'sueurs_freq',  placeholder: 'Ex : 2/nuit' },
+  { id: 'pas',      label: '👟 Nombre de pas/jour',       srcField: 'nb_pas',       placeholder: 'Ex : 6000' },
+];
+// Sections avec score /10
+const EVO_SCORE_SECTIONS = [
+  { id: 'faim',     label: '🍽 Faim',        srcField: 'sc_faim' },
+  { id: 'satiete',  label: '✅ Satiété',     srcField: 'sc_satiete' },
+  { id: 'stress',   label: '😤 Stress',      srcField: 'sc_stress' },
+  { id: 'anxiete',  label: '😰 Anxiété',     srcField: 'sc_anxiete' },
+  { id: 'fatigue',  label: '😴 Fatigue',     srcField: 'sc_fatigue' },
+  { id: 'deprime',  label: '😔 Déprime',     srcField: 'sc_deprime' },
+  { id: 'irrit',    label: '😠 Irritabilité',srcField: 'sc_irrit' },
+  { id: 'motiv',    label: '💪 Motivation',  srcField: 'sc_motiv' },
+  { id: 'concent',  label: '🎯 Concentration',srcField: 'sc_concent' },
+  { id: 'memoire',  label: '🧩 Mémoire',     srcField: 'sc_memoire' },
+];
+
+function fillEvolution(evoData, formData) {
+  const container = document.getElementById('evolution-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const createdAt = currentId && clients[currentId] ? clients[currentId].createdAt : null;
+  const dateLabel = createdAt ? new Date(createdAt).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
+  const isoDate = dateLabel.split('/').reverse().join('-');
+  const dateEl = document.getElementById('evo-creation-date');
+  if (dateEl) dateEl.textContent = `Dossier créé le ${dateLabel}`;
+
+  // Sections texte/nombre
+  EVO_SECTIONS.forEach(sec => {
+    const entries = evoData[sec.id] || [];
+    const initVal = formData[sec.srcField] || '';
+    const block = document.createElement('div');
+    block.className = 'evo-block';
+    block.innerHTML = `
+      <div class="evo-block-title">${sec.label}</div>
+      <div class="evo-entries" id="evo-entries-${sec.id}">
+        <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;padding:5px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px">
+          <input type="date" class="fi" style="padding:5px 8px;font-size:13px;background:transparent;border:none" value="${isoDate}" disabled>
+          <input type="text" class="fi" style="background:transparent;border:none;font-size:13px" placeholder="${sec.placeholder}" value="${initVal}" id="evo-init-${sec.id}">
+          <span class="evo-initial-badge">Initial</span>
+        </div>
+      </div>
+      <div style="padding:4px 12px 10px">
+        <button class="btn-add-row" onclick="addEvoEntry('${sec.id}','${sec.placeholder}')">＋ Ajouter une entrée</button>
+      </div>`;
+    container.appendChild(block);
+    const entriesContainer = block.querySelector(`#evo-entries-${sec.id}`);
+    entries.forEach(e => addEvoEntryRow(sec.id, sec.placeholder, e, entriesContainer));
+  });
+
+  // Sections score /10
+  EVO_SCORE_SECTIONS.forEach(sec => {
+    const entries = evoData['score_' + sec.id] || [];
+    const initVal = formData[sec.srcField] || '';
+    const block = document.createElement('div');
+    block.className = 'evo-block';
+    block.innerHTML = `
+      <div class="evo-block-title">${sec.label} <span style="font-weight:400;font-size:11px;opacity:0.7">(/10)</span></div>
+      <div class="evo-entries" id="evo-entries-score-${sec.id}">
+        <div style="display:grid;grid-template-columns:140px 60px 1fr auto;gap:8px;align-items:center;padding:5px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px">
+          <input type="date" class="fi" style="padding:5px 8px;font-size:13px;background:transparent;border:none" value="${isoDate}" disabled>
+          <input type="number" min="0" max="10" class="sv" placeholder="—" value="${initVal}" id="evo-init-score-${sec.id}">
+          <div></div>
+          <span class="evo-initial-badge">Initial</span>
+        </div>
+      </div>
+      <div style="padding:4px 12px 10px">
+        <button class="btn-add-row" onclick="addEvoScoreEntry('${sec.id}')">＋ Ajouter une entrée</button>
+      </div>`;
+    container.appendChild(block);
+    const entriesContainer = block.querySelector(`#evo-entries-score-${sec.id}`);
+    entries.forEach(e => addEvoScoreEntryRow(sec.id, e, entriesContainer));
+  });
+}
+
+function addEvoEntry(secId, placeholder) {
+  const container = document.getElementById(`evo-entries-${secId}`);
+  if (container) addEvoEntryRow(secId, placeholder, { date: new Date().toISOString().split('T')[0], val: '' }, container);
+}
+
+function addEvoEntryRow(secId, placeholder, entry, container) {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);';
+  row.innerHTML = `
+    <input type="date" class="fi" style="padding:5px 8px;font-size:13px" value="${entry.date||''}">
+    <input type="text" class="fi evo-val-input" placeholder="${placeholder}" value="${entry.val||''}">
+    <button class="btn-del-doc" onclick="this.parentElement.remove()" title="Supprimer">×</button>`;
+  if (container) container.appendChild(row);
+}
+
+function addEvoScoreEntry(secId) {
+  const container = document.getElementById(`evo-entries-score-${secId}`);
+  if (container) addEvoScoreEntryRow(secId, { date: new Date().toISOString().split('T')[0], val: '' }, container);
+}
+
+function addEvoScoreEntryRow(secId, entry, container) {
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:140px 60px 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);';
+  row.innerHTML = `
+    <input type="date" class="fi" style="padding:5px 8px;font-size:13px" value="${entry.date||''}">
+    <input type="number" min="0" max="10" class="sv" placeholder="—" value="${entry.val||''}">
+    <div></div>
+    <button class="btn-del-doc" onclick="this.parentElement.remove()" title="Supprimer">×</button>`;
+  if (container) container.appendChild(row);
+}
+
+function readEvolution() {
+  const data = {};
+  EVO_SECTIONS.forEach(sec => {
+    const container = document.getElementById(`evo-entries-${sec.id}`);
+    if (!container) return;
+    const entries = [];
+    Array.from(container.children).slice(1).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 2) entries.push({ date: inputs[0].value, val: inputs[1].value });
+    });
+    data[sec.id] = entries;
+    const initEl = document.getElementById(`evo-init-${sec.id}`);
+    if (initEl) data[`${sec.id}_init`] = initEl.value;
+  });
+  EVO_SCORE_SECTIONS.forEach(sec => {
+    const container = document.getElementById(`evo-entries-score-${sec.id}`);
+    if (!container) return;
+    const entries = [];
+    Array.from(container.children).slice(1).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 2) entries.push({ date: inputs[0].value, val: inputs[1].value });
+    });
+    data['score_' + sec.id] = entries;
+    const initEl = document.getElementById(`evo-init-score-${sec.id}`);
+    if (initEl) data[`score_${sec.id}_init`] = initEl.value;
+  });
+  return data;
+}
+
+// Met à jour les valeurs "Initial" de l'évolution depuis les champs actuels du formulaire
+function refreshEvoInitValues() {
+  EVO_SECTIONS.forEach(sec => {
+    const srcEl = document.getElementById(sec.srcField);
+    const initEl = document.getElementById(`evo-init-${sec.id}`);
+    if (srcEl && initEl && srcEl.value) initEl.value = srcEl.value;
+  });
+  EVO_SCORE_SECTIONS.forEach(sec => {
+    const srcEl = document.getElementById(sec.srcField);
+    const initEl = document.getElementById(`evo-init-score-${sec.id}`);
+    if (srcEl && initEl && srcEl.value) initEl.value = srcEl.value;
+  });
+}
+
+// ═══════════════════════════════════════
+// CHIPS MULTI-SÉLECTION (Profil)
+// ═══════════════════════════════════════
+function chipMulti(el, grp) {
+  el.classList.toggle('on');
+}
+
+function readChipMulti(grp) {
+  return Array.from(document.querySelectorAll(`#${grp} .chip-multi.on`)).map(c => c.textContent);
+}
+
+function fillChipMulti(grp, values) {
+  if (!values || !values.length) return;
+  document.querySelectorAll(`#${grp} .chip-multi`).forEach(c => {
+    c.classList.toggle('on', values.includes(c.textContent));
+  });
+}
+
+// ═══════════════════════════════════════
+// INDICATEURS ROUGE / ORANGE
+// ═══════════════════════════════════════
+// IDs des champs qui ont un indicateur
+const FLAG_IDS = [
+  // Médical
+  'mal_act','mal_pass','antecedents',
+  // Alimentation
+  'regime','intolerances','allergies','repas','hydrat',
+  // Sport
+  'nb_pas',
+  // Mental (scores)
+  'sc_stress','sc_anxiete','sc_concent','sc_memoire','sc_fatigue','sc_deprime','sc_irrit','sc_motiv',
+  // Sommeil
+  'coucher','endorm','sc_sommeil','duree_sommeil','reveils','cycle_sommeil','med_sommeil',
+  // Corps — peau
+  'peau',
+  // Corps — articulations
+  'doul_chron','doul_aigu','articu_ant',
+  // Corps — thyroïde (tous les yn de thyroïde — gérés par label)
+  'sc_thyf',
+  // Corps — immunité
+  'itu','mycoses',
+  // Ménopause (gérés par yn label)
+  'bdc_freq','sueurs_freq',
+];
+
+// IDs des yn (Oui/Non) qui ont un indicateur — on flagge le label parent
+const FLAG_YN_LABELS = [
+  // Thyroïde
+  'Fatigue dès le matin ?','Cernes','Frilosité','Perte tiers externe sourcils',
+  'Peau sèche (surtout jambes)','Rétention d\'eau','Réveil avec yeux gonflés',
+  'Tout semble au ralenti','Mange peu (digestion difficile)',
+  // Immunité
+  'Souvent malade ?',
+  // Ménopause
+  'Bouffées de chaleur','Sueurs nocturnes','Prise de poids',
+  'Incontinence urinaire (à l\'effort)','Hyperactivité de la vessie',
+  'Sécheresse vaginale','Règles très abondantes (perte fer)','Syndrome pré-menstruel',
+];
+
+function initFlags() {
+  // Champs input/textarea/select
+  FLAG_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const fg = el.closest('.fg');
+    if (!fg) return;
+    const flEl = fg.querySelector('.fl');
+    if (!flEl) return;
+    addFlagBtn(flEl, id);
+  });
+
+  // Bilan sanguin — tous les marqueurs
+  MARQUEURS.forEach(m => {
+    const container = document.getElementById(`bilan-entries-${m.id}`);
+    if (!container) return;
+    const fg = container.closest('.fg') || container.parentElement;
+    // Trouver le label dans le bloc bilan
+    const labelEl = fg && fg.querySelector ? fg.querySelector('[class*="fl"]') : null;
+    // Alternative : chercher via le bloc parent
+    const block = container.closest('[style*="border"]');
+    if (block) {
+      const lbl = block.querySelector('.fl');
+      if (lbl && !lbl.querySelector('.flag-btn')) addFlagBtn(lbl, 'bilan_' + m.id);
+    }
+  });
+
+  // YN labels
+  document.querySelectorAll('.fg').forEach(fg => {
+    const flEl = fg.querySelector('.fl');
+    if (!flEl) return;
+    const txt = flEl.textContent.trim();
+    if (FLAG_YN_LABELS.some(l => txt.includes(l.replace("'", "'")))) {
+      if (!flEl.querySelector('.flag-btn')) addFlagBtn(flEl, 'yn_flag_' + txt.replace(/\W/g,'_').slice(0,30));
+    }
+  });
+}
+
+function addFlagBtn(labelEl, flagId) {
+  if (labelEl.querySelector('.flag-btn')) return; // déjà ajouté
+  labelEl.style.display = 'flex';
+  labelEl.style.alignItems = 'center';
+  labelEl.style.justifyContent = 'space-between';
+  const btn = document.createElement('button');
+  btn.className = 'flag-btn';
+  btn.dataset.flagId = flagId;
+  btn.dataset.state = 'normal';
+  btn.textContent = '●';
+  btn.title = 'Cliquer pour signaler';
+  btn.onclick = (e) => { e.preventDefault(); cycleFlag(btn, labelEl); };
+  labelEl.appendChild(btn);
+}
+
+function cycleFlag(btn, labelEl) {
+  const states = ['normal', 'orange', 'red'];
+  const curr = btn.dataset.state || 'normal';
+  const next = states[(states.indexOf(curr) + 1) % states.length];
+  btn.dataset.state = next;
+  btn.className = 'flag-btn' + (next !== 'normal' ? ' ' + next : '');
+  labelEl.className = 'fl' + (next === 'orange' ? ' flagged-orange' : next === 'red' ? ' flagged-red' : '');
+}
+
+function readFlags() {
+  const flags = {};
+  document.querySelectorAll('.flag-btn').forEach(btn => {
+    if (btn.dataset.flagId && btn.dataset.state !== 'normal') {
+      flags[btn.dataset.flagId] = btn.dataset.state;
+    }
+  });
+  return flags;
+}
+
+function fillFlags(flags) {
+  if (!flags) return;
+  document.querySelectorAll('.flag-btn').forEach(btn => {
+    const state = flags[btn.dataset.flagId];
+    if (state) {
+      btn.dataset.state = state;
+      btn.className = 'flag-btn ' + state;
+      const labelEl = btn.closest('.fl');
+      if (labelEl) {
+        labelEl.className = 'fl' + (state === 'orange' ? ' flagged-orange' : ' flagged-red');
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+// SYNCHRONISATION POIDS/TAILLE/ÂGE (Évolutions 5 & 7)
+// ═══════════════════════════════════════
+function syncPoidsToCalc() {
+  // Poids médical → poids calcul
+  const poidsVal = document.getElementById('poids') ? document.getElementById('poids').value : '';
+  const tailleVal = document.getElementById('taille') ? document.getElementById('taille').value : '';
+  const tailleM = tailleVal ? (parseFloat(tailleVal) > 3 ? parseFloat(tailleVal)/100 : parseFloat(tailleVal)).toFixed(2) : '';
+  if (poidsVal) { const el = document.getElementById('c_poids'); if (el) el.value = poidsVal; }
+  if (tailleM) { const el = document.getElementById('c_taille'); if (el) el.value = tailleM; }
+  // Âge depuis date de naissance
+  const ddn = document.getElementById('ddn') ? document.getElementById('ddn').value : '';
+  if (ddn) {
+    const age = Math.floor((new Date() - new Date(ddn)) / (365.25 * 24 * 3600 * 1000));
+    const ageEl = document.getElementById('c_age');
+    if (ageEl) ageEl.value = age;
+  }
+  calcPoids();
+}
+
+// ═══════════════════════════════════════
+// POST-IT TODO
+// ═══════════════════════════════════════
+function addPostitItem(text = '', done = false) {
+  const container = document.getElementById('postit-items');
+  const addBtn = container.querySelector('.btn-postit-add');
+  const item = document.createElement('div');
+  item.className = 'postit-item' + (done ? ' done' : '');
+  item.innerHTML = `
+    <input type="checkbox" class="postit-check" ${done ? 'checked' : ''} onchange="togglePostit(this)">
+    <input type="text" class="postit-text" placeholder="Note…" value="${text.replace(/"/g,'&quot;')}" onblur="autoSavePostit()">
+    <button class="postit-del" onclick="this.parentElement.remove(); autoSavePostit();" title="Supprimer">×</button>`;
+  container.insertBefore(item, addBtn);
+  if (!text) item.querySelector('.postit-text').focus();
+}
+
+function togglePostit(cb) {
+  const item = cb.closest('.postit-item');
+  item.classList.toggle('done', cb.checked);
+  autoSavePostit();
+}
+
+function readPostit() {
+  const items = [];
+  document.querySelectorAll('#postit-items .postit-item').forEach(item => {
+    const text = item.querySelector('.postit-text').value.trim();
+    const done = item.querySelector('.postit-check').checked;
+    if (text) items.push({ text, done });
+  });
+  return items;
+}
+
+function fillPostit(items) {
+  const container = document.getElementById('postit-items');
+  if (!container) return;
+  // Vider sauf le bouton
+  Array.from(container.children).forEach(c => { if (!c.classList.contains('btn-postit-add')) c.remove(); });
+  (items || []).forEach(item => addPostitItem(item.text, item.done));
+}
+
+function autoSavePostit() {
+  if (!currentId) return;
+  if (!clients[currentId].data) clients[currentId].data = {};
+  clients[currentId].data.postit = readPostit();
+  clients[currentId].updatedAt = new Date().toISOString();
+  saveToStorage();
+}
+
+// ═══════════════════════════════════════
+// START
+// ═══════════════════════════════════════
+init();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
